@@ -10,7 +10,7 @@
 
 ## 2. Docker Compose Configuratie
 
-- [ ] 2.1 Creëer docker-compose.yml met frontend, backend en SQLite database services
+- [ ] 2.1 Creëer docker-compose.yml met frontend en backend services alleen
 - [ ] 2.2 Configureer frontend service met Next.js build en ontwikkelingsopstelling
 - [ ] 2.3 Configureer backend service met FastAPI applicatie en afhankelijkheden
 - [ ] 2.4 Stel backend-mounted SQLite volume/path in met persistentie configuratie
@@ -33,10 +33,16 @@
 - [ ] 4.1 Creëer FastAPI applicatie met health endpoint op /health
 - [ ] 4.2 Implementeer health checks voor backend en SQLite componenten alleen
 - [ ] 4.3 Configureer FastAPI met deterministische minimale contract: exact JSON success/failure body en HTTP codes
-- [ ] 4.4 Implementeer gebonden SQLite check/timeout strategie
+- [ ] 4.4 Implementeer gebonden SQLite check/timeout strategie (max 500ms)
 - [ ] 4.5 Voeg health endpoint toe aan Docker Compose health checks
 - [ ] 4.6 Test health endpoint met curl en verifieer response formaat
 - [ ] 4.7 Implementeer gezonde en failure verificatie
+- [ ] 4.8 Test exact JSON success response met Content-Type application/json en HTTP 200
+- [ ] 4.9 Test exact JSON SQLite failure response met Content-Type application/json en HTTP 503
+- [ ] 4.10 Test exact JSON backend failure response met Content-Type application/json en HTTP 500
+- [ ] 4.11 Test SQLite timeout strategie (max 500ms response time)
+- [ ] 4.12 Test SQLite unavailability test arrangement (verwijder database path)
+- [ ] 4.13 Implementeer separate frontend smoke check
 
 ## 5. SQLite Database Configuratie
 

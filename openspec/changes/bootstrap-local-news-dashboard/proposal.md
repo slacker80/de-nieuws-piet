@@ -10,7 +10,7 @@ Dit wijzigingsvoorstel vestigt de fundamentele lokale ontwikkelomgeving voor het
 - **Docker Compose**: Vestig Docker Compose-configuratie voor lokale ontwikkeling
 - **Next.js PWA Skelet**: Creëer basis Next.js Progressive Web App met responsief ontwerp
 - **FastAPI Health Endpoint**: Implementeer health check API-endpoint voor servicebewaking
-- **SQLite Configuratie**: Stel SQLite databaseschema en configuratie in
+- **SQLite Configuratie**: Stel SQLite database configuratie en persistentie in
 - **Lokale Documentatie**: Creëer uitgebreide lokale ontwikkeldocumentatie
 - **Healthcheck Tests**: Implementeer geautomatiseerde healthchecks voor alle componenten
 

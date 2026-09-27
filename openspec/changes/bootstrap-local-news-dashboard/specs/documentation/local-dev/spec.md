@@ -39,7 +39,7 @@ Het systeem ZAL documentatie bieden voor SQLite database setup en gebruik.
 
 #### Scenario: SQLite documentatie
 - **WANNEER** ontwikkelaar database instructies nodig heeft
-- **DAN** bevat documentatie database schema, queries en management commando's
+- **DAN** bevat documentatie database path, initialisatie, lifecycle, persistentie en health verificatie
 
 ### Requirement: Healthcheck documentatie
 Het systeem ZAL documentatie bieden voor healthcheck tests en monitoring.
