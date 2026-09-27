@@ -5,7 +5,7 @@
 - [x] 1.1 Creëer monorepo directory structuur met frontend/, backend/, docker/, docs/ directories
 - [x] 1.2 Initialiseer git repository en configureer basis projectstructuur
 - [x] 1.3 Creëer package.json en package-lock.json voor Node.js afhankelijkheden
-- [ ] 1.4 Creëer requirements.txt voor Python afhankelijkheden
+- [x] 1.4 Creëer requirements.txt voor Python afhankelijkheden
 - [x] 1.5 Initialiseer .gitignore met geschikte patronen
 
 ## 2. Docker Compose Configuratie

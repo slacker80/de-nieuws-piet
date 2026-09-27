@@ -1,0 +1,18 @@
+# Python-afhankelijkheden voor de FastAPI-backend (module backend/).
+# Vereist Python >= 3.10 (conform de gepinde pakketten hieronder).
+# Alleen directe dependencies, elk exact gepind (==). Transities worden door pip
+# volgens deze randvoorwaarden opgelost en zijn hierin niet volledig vastgelegd.
+
+# --- Runtime ---
+# FastAPI: webframework voor de backend en het exacte /health-JSON-contract.
+fastapi==0.141.1
+# uvicorn: ASGI-server om de backend lokaal en in de backend-container te draaien.
+uvicorn==0.54.0
+
+# --- Test ---
+# pytest: testrunner voor de backend health- en fault-tests (app-factory per test).
+# De repository-.gitignore bevat al .pytest_cache/, dit is de teststack-keuze.
+pytest==9.1.1
+# httpx: HTTP-client achter de FastAPI/starlette TestClient (en voor directe
+# `import httpx` client-tests); vereist door de backend health-/fault-tests.
+httpx==0.28.1
