@@ -25,10 +25,6 @@ Dit wijzigingsvoorstel vestigt de fundamentele lokale ontwikkelomgeving voor het
 - `health-monitoring/health-endpoint`: Biedt health check endpoint voor service statusbewaking
 - `database/local-sqlite`: Configureert SQLite database voor lokale ontwikkeling en testing
 - `documentation/local-dev`: Creëert uitgebreide lokale ontwikkeldocumentatie
-- `compose/acceptance`: Biedt reproduceerbare Docker Compose acceptatie met exacte commando's en verificatie
-- `rollback/data-safe`: Biedt concrete data-safe rollback plan met exacte commando's en procedures
-- `testing/failure-deterministic`: Biedt deterministische en test-only failure testing met fault-injection
-- `testing/mobile-acceptance`: Biedt reproduceerbare mobiele acceptatie bij 360px breedte
 
 ## Impact
 
