@@ -39,6 +39,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Database-backups (data-safe rollback; host-backups buiten het named volume)
+backups/
+
 # Python (backend)
 __pycache__/
 *.py[cod]

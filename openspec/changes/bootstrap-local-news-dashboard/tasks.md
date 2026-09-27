@@ -10,13 +10,13 @@
 
 ## 2. Docker Compose Configuratie
 
-- [ ] 2.1 Creëer Compose bestand `compose.yaml` met alleen `frontend` en `backend` services (SQLite is nooit een service)
-- [ ] 2.2 Configureer frontend service met Next.js build en ontwikkelingsopstelling
-- [ ] 2.3 Configureer backend service met FastAPI applicatie en afhankelijkheden
-- [ ] 2.4 Stel backend-mounted SQLite named volume `nieuws_piet_sqlite_data` in met exacte `name:` identiteit (zonder Compose project prefix), mount `/app/data` en database file `/app/data/news.db`
-- [ ] 2.5 Stel netwerkconfiguratie en service afhankelijkheden in
-- [ ] 2.6 Valideer Compose configuratie met `docker compose config` (v2 syntax, nooit `docker-compose`)
-- [ ] 2.7 Implementeer persistentie verificatie voor SQLite database
+- [x] 2.1 Creëer Compose bestand `compose.yaml` met alleen `frontend` en `backend` services (SQLite is nooit een service)
+- [x] 2.2 Configureer frontend service met Next.js build en ontwikkelingsopstelling
+- [x] 2.3 Configureer backend service met FastAPI applicatie en afhankelijkheden
+- [x] 2.4 Stel backend-mounted SQLite named volume `nieuws_piet_sqlite_data` in met exacte `name:` identiteit (zonder Compose project prefix), mount `/app/data` en database file `/app/data/news.db`
+- [x] 2.5 Stel netwerkconfiguratie en service afhankelijkheden in
+- [x] 2.6 Valideer Compose configuratie met `docker compose config` (v2 syntax, nooit `docker-compose`)
+- [x] 2.7 Implementeer persistentie verificatie voor SQLite database
 - [ ] 2.8 Implementeer reproduceerbare Compose acceptatie met exact `docker compose up -d --build`, service namen, frontend/backend URLs/ports, readiness conditions en curl/assertie commando's
 - [ ] 2.9 Implementeer uitvoerbare data-safe rollback/restore met read-only backup bron, backup-integriteitsvalidatie, feitelijk restore voor preserve én destructive pad, en `docker compose down -v` uitsluitend als opt-in (volgorde: backup → validatie → opt-in `down -v` → restore in het opnieuw aangemaakte volume → verificatie; restore nooit vóór `down -v`)
 
