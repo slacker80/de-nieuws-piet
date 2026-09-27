@@ -2,7 +2,7 @@
 
 ## Context
 
-Het project vereist een lokale, mobiele persoonlijke nieuwssite met een monorepo-structuur. Dit wijzigingsvoorstel vestigt de fundamentele lokale ontwikkelomgeving die alle daaropvolgende features zal ondersteunen. De architectuur volgt de bestaande projectvisie: lokale ontwikkeling met Docker Compose, Next.js PWA frontend, FastAPI backend en SQLite database. Dit wijzigingsvoorstel richt zich op het vestigen van de basisinfrastructuur zonder externe afhankelijkheden of publieke toegang.
+Het project vereist een lokale, mobiele persoonlijke nieuwssite met een monorepo-structuur. Dit wijzigingsvoorstel vestigt de complete lokale ontwikkelomgeving met alle noodzakelijke componenten die de fundamentele basis vormen voor daaropvolgende features. De architectuur volgt de bestaande projectvisie: lokale ontwikkeling met Docker Compose, Next.js PWA frontend, FastAPI backend en SQLite database. Dit wijzigingsvoorstel richt zich op het vestigen van de basisinfrastructuur zonder externe afhankelijkheden of publieke toegang.
 
 ## Doelen / Niet-doelen
 
@@ -12,6 +12,9 @@ Het project vereist een lokale, mobiele persoonlijke nieuwssite met een monorepo
 - Bied health monitoring capabilities voor alle applicatiecomponenten
 - Implementeer uitgebreide lokale documentatie voor toekomstige ontwikkelaars
 - Zorg dat het systeem met één commando kan worden gestart
+- Implementeer exacte data-safe rollback plan met concrete shell commando's
+- Implementeer deterministische en test-only failure testing met fault-injection mechanism
+- Implementeer reproduceerbare mobiele acceptatie bij 360px breedte met Playwright/framework
 
 **Niet-doelen:**
 - Implementeer RSS feed ingang of externe API-integraties

@@ -86,3 +86,92 @@
 - [ ] 8.5 Test applicatie functionaliteit met lege staat
 - [ ] 8.6 Documenteer succesvolle integratietest resultaten
 - [ ] 8.7 Implementeer reproduceerbare mobiele acceptatie bij 360px breedte met Playwright/framework, exacte viewport/expected empty-state assertions, geen horizontale scrolling, zichtbare primaire content/navigation, toegankelijke health/state
+
+## 9. Exacte Verificatie Taken
+
+### 9.1 Data-safe Rollback Verificatie
+- [ ] 9.1.1 Verifieer exacte DB rollback named volume `nieuws_piet_sqlite_data`
+- [ ] 9.1.2 Verifieer backend mount `/app/data` en database file `/app/data/news.db`
+- [ ] 9.1.3 Verifieer host backup `./backups/news.db.<UTC timestamp>.bak` outside named volume
+- [ ] 9.1.4 Verifieer exacte shell command sequence met docker compose/docker en standaard shell
+- [ ] 9.1.5 Verifieer stop backend, mkdir -p backups, backup from named volume, non-destructive docker compose down
+- [ ] 9.1.6 Verifieer restore command copying selected backup into recreated/running volume/db path
+- [ ] 9.1.7 Verifieer restart `docker compose up -d backend` en `docker compose exec backend python ...` integrity verification
+- [ ] 9.1.8 Verifieer `curl` /health assertion
+- [ ] 9.1.9 Verifieer opt-in `docker compose down -v` only after successful backup and restore
+
+### 9.2 Health Test-only Config Verificatie
+- [ ] 9.2.1 Verifieer health test-only exact config: ONLY when `APP_ENV=test`
+- [ ] 9.2.2 Verifieer `APP_HEALTH_FAULT` values `sqlite`, `sqlite_timeout`, `backend`, `all`
+- [ ] 9.2.3 Verifieer normal health behavior when `APP_ENV` not `test`
+- [ ] 9.2.4 Verifieer four named tests with exact assertions
+- [ ] 9.2.5 Verifieer `sqlite_timeout` server probe budget <=500ms
+- [ ] 9.2.6 Verifieer client assertion budget <=1000ms
+- [ ] 9.2.7 Verifieer reset cleanup
+
+### 9.3 Compose Exact Command Verificatie
+- [ ] 9.3.1 Verifieer exact command: `docker compose up -d --build`
+- [ ] 9.3.2 Verifieer only `frontend` and `backend` services
+- [ ] 9.3.3 Verifieer exact paths URLs
+- [ ] 9.3.4 Verifieer copyable shell loop independently checks frontend `http://localhost:3000/` for HTTP 200 and `Nieuws Piet`
+- [ ] 9.3.5 Verifieer backend `http://localhost:8000/health` for HTTP 200 + expected JSON
+- [ ] 9.3.6 Verifieer max 30 attempts, sleep 1, curl `--max-time 5`
+- [ ] 9.3.7 Verifieer only success if BOTH flags true, otherwise exit nonzero after loop
+- [ ] 9.3.8 Verifieer SQLite never a service
+
+### 9.4 Mobile Exact Verificatie
+- [ ] 9.4.1 Verifieer local dev dependency `@playwright/test` version pinned in project lockfile
+- [ ] 9.4.2 Verifieer command `npm run test:e2e`
+- [ ] 9.4.3 Verifieer start local frontend beforehand with Compose readiness
+- [ ] 9.4.4 Verifieer test `http://localhost:3000/`, viewport 360x800
+- [ ] 9.4.5 Verifieer assert marker text `Nieuws Piet`
+- [ ] 9.4.6 Verifieer visible nav landmark
+- [ ] 9.4.7 Verifieer visible main landmark
+- [ ] 9.4.8 Verifieer text `Nog geen nieuws beschikbaar`
+- [ ] 9.4.9 Verifieer `scrollWidth <= clientWidth`
+- [ ] 9.4.10 Verifieer explicitly ban accounts/API keys/SaaS/browser cloud/paid services/external APIs for all tests
+
+## 10. Discrete Verified Tasks
+
+### 10.1 Database/local-sqlite Spec Updates
+- [ ] 10.1.1 Verifieer DB rollback named volume `nieuws_piet_sqlite_data` in spec
+- [ ] 10.1.2 Verifieer backend mount `/app/data` and database file `/app/data/news.db` in spec
+- [ ] 10.1.3 Verifieer host backup `./backups/news.db.<UTC timestamp>.bak` outside named volume in spec
+- [ ] 10.1.4 Verifieer exact shell command sequence in spec
+- [ ] 10.1.5 Verifieer non-destructive docker compose down and restore procedure in spec
+
+### 10.2 Health-monitoring/health-endpoint Spec Updates
+- [ ] 10.2.1 Verifieer health test-only exact config: ONLY when `APP_ENV=test`
+- [ ] 10.2.2 Verifieer `APP_HEALTH_FAULT` values `sqlite`, `sqlite_timeout`, `backend`, `all`
+- [ ] 10.2.3 Verifieer four named tests with exact assertions
+- [ ] 10.2.4 Verifieer `sqlite_timeout` server probe budget <=500ms
+- [ ] 10.2.5 Verifieer client assertion budget <=1000ms
+- [ ] 10.2.6 Verifieer reset cleanup
+
+### 10.3 Local-development/setup Spec Updates
+- [ ] 10.3.1 Verifieer exact command: `docker compose up -d --build`
+- [ ] 10.3.2 Verifieer only `frontend` and `backend` services
+- [ ] 10.3.3 Verifieer copyable shell loop for frontend and backend verification
+- [ ] 10.3.4 Verifieer max 30 attempts, sleep 1, curl `--max-time 5`
+- [ ] 10.3.5 Verifieer SQLite never a service
+
+### 10.4 Documentation/local-dev Spec Updates
+- [ ] 10.4.1 Verifieer mobile exact: local dev dependency `@playwright/test` version pinned
+- [ ] 10.4.2 Verifieer command `npm run test:e2e`
+- [ ] 10.4.3 Verifieer test `http://localhost:3000/`, viewport 360x800
+- [ ] 10.4.4 Verifieer assert marker text `Nieuws Piet`, visible nav landmark, visible main landmark
+- [ ] 10.4.5 Verifieer text `Nog geen nieuws beschikbaar`, and `scrollWidth <= clientWidth`
+- [ ] 10.4.6 Verifieer explicitly ban accounts/API keys/SaaS/browser cloud/paid services/external APIs
+
+### 10.5 Design.md Updates
+- [ ] 10.5.1 Verifieer design decisions reflect new requirements
+- [ ] 10.5.2 Verifieer architecture decisions align with exact specifications
+- [ ] 10.5.3 Verifieer technology stack decisions support all requirements
+- [ ] 10.5.4 Verifieer risk mitigation strategies address new requirements
+- [ ] 10.5.5 Verifieer migration plan includes all new requirements
+
+### 10.6 Tasks.md Updates
+- [ ] 10.6.1 Verifieer discrete verified tasks for each acceptance
+- [ ] 10.6.2 Verifieer use Dutch prose but exact SHALL/MUST and Given/When/Then in specs
+- [ ] 10.6.3 Verifieer ensure no duplicate timeout/rollback
+- [ ] 10.6.4 Verifieer all tasks are actionable and testable

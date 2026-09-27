@@ -115,13 +115,19 @@ Het systeem SHALL test arrangement bieden om backend health check intern te veri
 
 **Note:** This is a narrowly scoped test-only fault injection/configuration mechanism, not an external API/account/service. An unreachable API is a client connection failure outside `/health` contract.
 
-### Requirement: External frontend smoke verification
-Het systeem SHALL externe frontend smoke verificatie bieden die frontend bereikbaarheid verifieert na Docker Compose startup afzonderlijk van backend health endpoint.
+### Requirement: Health endpoint test-only fault injection configuration
+Het systeem SHALL test-only fault injection configuratie bieden die EXACT alleen actief is wanneer `APP_ENV=test` en `APP_HEALTH_FAULT` specifieke waarden toestaat.
 
-#### Scenario: Externe frontend smoke verificatie
-- **Given** Docker Compose startup voltooid is
-- **When** browser of HTTP client frontend's bestaande publieke URL aanvraagt
-- **Then** ontvangt client verwachte frontend pagina response met HTTP 200
+#### Scenario: Health endpoint test-only fault injection
+- **Given** FastAPI applicatie start met test configuratie
+- **When** health endpoint aanvraag wordt verwerkt met test environment
+- **Then** fault injection mechanism werkt EXCLUSIEF wanneer:
+  - `APP_ENV=test` environment variable is gezet
+  - `APP_HEALTH_FAULT` is een van: `sqlite`, `sqlite_timeout`, `backend`, `all`
+  - Alle andere `APP_HEALTH_FAULT` waarden worden genegeerd/rejected
+  - Normale health behavior blijft actief wanneer `APP_ENV` niet `test` is
+
+**Note:** This is a test-only configuration mechanism, niet een externe API/account/service. Fault injection gebruikt een test double en veroorzaakt nooit filesystem mutation.
 
 ### Requirement: Health endpoint test assertions
 Het systeem SHALL test assertions bieden voor elke response: status, JSON fields/body, headers en timestamp format.
@@ -132,3 +138,99 @@ Het systeem SHALL test assertions bieden voor elke response: status, JSON fields
 - **Then** wordt HTTP status code, Content-Type header, JSON body structure, timestamp format en component statusen gevalideerd
 
 **Note:** Test assertions zijn implementatie-neutraal maar actionable voor elke response type.
+
+### Requirement: Health endpoint test scenarios
+Het systeem SHALL vier exacte named tests bieden met deterministische assertions en reset cleanup.
+
+#### Scenario: Test 1 - Healthy system
+- **Given** FastAPI applicatie start met `APP_ENV=test` en geen `APP_HEALTH_FAULT`
+- **When** `/health` endpoint wordt aangevraagd
+- **Then** response moet:
+  - HTTP status: 200
+  - Content-Type: application/json
+  - JSON body:
+    ```json
+    {
+      "status": "healthy",
+      "timestamp": "<RFC3339_UTC_TIMESTAMP>",
+      "components": {
+        "backend": "healthy",
+        "sqlite": "healthy"
+      }
+    }
+    ```
+  - Timestamp format: RFC3339 UTC
+  - Alle andere fields exact
+
+#### Scenario: Test 2 - SQLite failure
+- **Given** FastAPI applicatie start met `APP_ENV=test` en `APP_HEALTH_FAULT=sqlite`
+- **When** `/health` endpoint wordt aangevraagd
+- **Then** response moet:
+  - HTTP status: 503
+  - Content-Type: application/json
+  - JSON body:
+    ```json
+    {
+      "status": "unhealthy",
+      "timestamp": "<RFC3339_UTC_TIMESTAMP>",
+      "components": {
+        "backend": "healthy",
+        "sqlite": "unhealthy"
+      },
+      "error": "SQLite database not accessible"
+    }
+    ```
+  - Timestamp format: RFC3339 UTC
+  - Alle andere fields exact
+
+#### Scenario: Test 3 - Backend failure
+- **Given** FastAPI applicatie start met `APP_ENV=test` en `APP_HEALTH_FAULT=backend`
+- **When** `/health` endpoint wordt aangevraagd
+- **Then** response moet:
+  - HTTP status: 500
+  - Content-Type: application/json
+  - JSON body:
+    ```json
+    {
+      "status": "unhealthy",
+      "timestamp": "<RFC3339_UTC_TIMESTAMP>",
+      "components": {
+        "backend": "unhealthy",
+        "sqlite": "healthy"
+      },
+      "error": "Backend internal health check failed"
+    }
+    ```
+  - Timestamp format: RFC3339 UTC
+  - Alle andere fields exact
+
+#### Scenario: Test 4 - Combined failure
+- **Given** FastAPI applicatie start met `APP_ENV=test` en `APP_HEALTH_FAULT=all`
+- **When** `/health` endpoint wordt aangevraagd
+- **Then** response moet:
+  - HTTP status: 503
+  - Content-Type: application/json
+  - JSON body:
+    ```json
+    {
+      "status": "unhealthy",
+      "timestamp": "<RFC3339_UTC_TIMESTAMP>",
+      "components": {
+        "backend": "unhealthy",
+        "sqlite": "unhealthy"
+      },
+      "error": "Backend internal health check failed and SQLite database not accessible"
+    }
+    ```
+  - Timestamp format: RFC3339 UTC
+  - Alle andere fields exact
+
+#### Scenario: Test cleanup
+- **Given** health endpoint test voltooid is
+- **When** test cleanup wordt uitgevoerd
+- **Then** wordt test environment gereset:
+  - `APP_ENV` en `APP_HEALTH_FAULT` environment variables worden verwijderd
+  - SQLite database wordt hersteld naar normale health check status
+  - Backend health check wordt gereset naar normale status
+
+**Note:** Alle tests gebruiken test doubles en veroorzaken nooit filesystem mutation. `sqlite_timeout` server probe budget is <=500ms; client assertion budget is <=1000ms, voorkomende race condition.

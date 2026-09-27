@@ -19,31 +19,64 @@ Het systeem SHALL reproduceerbare Compose acceptatie bieden met exacte `docker c
 
 #### Scenario: Docker Compose acceptatie
 - **Given** Docker Compose startup wordt uitgevoerd
-- **When** `docker compose up -d` wordt uitgevoerd
+- **When** `docker compose up -d --build` wordt uitgevoerd
 - **Then** worden frontend en backend services gestart met exacte service namen, poorttoewijzingen (frontend:3000, backend:8000), readiness conditions en curl/assertie commando's voor verificatie
 
 **Note:** Compose acceptatie is implementatie-neutral maar concrete en actionable. SQLite is backend-volume mounted, niet separate service.
 
-### Requirement: SQLite database configuratie
-Het systeem SHALL SQLite database configureren met minimale configuratie, connectie lifecycle, connectiviteit en persistentie alleen.
+### Requirement: Exact compose command
+Het systeem SHALL exacte `docker compose up -d --build` commando implementeren dat EXCLUSIEF frontend en backend services start.
 
-#### Scenario: Database schema initialisatie
-- **Given** applicatie start
-- **When** applicatie SQLite database schema initialiseert
-- **Then** wordt SQLite database geïnitialiseerd met minimale configuratie en persistentie
+#### Scenario: Exact compose command
+- **Given** Docker Compose startup wordt uitgevoerd
+- **When** exacte `docker compose up -d --build` commando wordt uitgevoerd
+- **Then** worden volgende services gestart:
+  - `frontend` service op poort 3000
+  - `backend` service op poort 8000
+  - SQLite is backend-volume mounted (`nieuws_piet_sqlite_data`), nooit een service
 
-### Requirement: Lokale documentatie
-Het systeem SHALL uitgebreide lokale ontwikkeldocumentatie bevatten voor het opzetten en draaien van de applicatie.
+### Requirement: Frontend en backend readiness verificatie
+Het systeem SHALL copyable shell loop bieden dat frontend en backend onafhankelijk verifieert met exacte curl commando's en assertions.
 
-#### Scenario: Documentatie beschikbaarheid
-- **Given** ontwikkelaar setup instructies nodig heeft
-- **When** ontwikkelaar documentatie sectie opent
-- **Then** is complete documentatie beschikbaar met stapsgewijze setup instructies
+#### Scenario: Frontend en backend readiness verificatie
+- **Given** Docker Compose startup voltooid is
+- **When** readiness verificatie commando wordt uitgevoerd
+- **Then** wordt volgende exacte shell loop uitgevoerd:
 
-### Requirement: Healthcheck tests
-Het systeem SHALL geautomatiseerde healthcheck tests bevatten die backend, SQLite en frontend componenten valideren.
+```bash
+#!/bin/bash
+# Exacte frontend en backend readiness verificatie
 
-#### Scenario: Healthcheck test uitvoering
-- **Given** healthcheck tests worden uitgevoerd
-- **When** healthcheck tests worden uitgevoerd
-- **Then** slagen alle tests en rapporteren de status van elke applicatiecomponent
+# Max 30 attempts met 1 second sleep
+for i in $(seq 1 30); do
+    # Frontend verificatie
+    FRONTEND_OK=false
+    BACKEND_OK=false
+    
+    # Frontend check
+    if curl -f --max-time 5 http://localhost:3000/ > /dev/null 2>&1; then
+        if curl -s --max-time 5 http://localhost:3000/ | grep -q "Nieuws Piet"; then
+            FRONTEND_OK=true
+        fi
+    fi
+    
+    # Backend health check
+    if curl -f --max-time 5 http://localhost:8000/health > /dev/null 2>&1; then
+        BACKEND_OK=true
+    fi
+    
+    # Beide checks moeten slagen
+    if [ "$FRONTEND_OK" = true ] && [ "$BACKEND_OK" = true ]; then
+        echo "Both frontend and backend are ready"
+        exit 0
+    fi
+    
+    echo "Attempt $i/30: Frontend=$FRONTEND_OK, Backend=$BACKEND_OK"
+    sleep 1
+done
+
+echo "Error: Frontend or backend not ready after 30 attempts"
+exit 1
+```
+
+**Note:** Loop verifieert expliciet beide services, slaat op success, exit nonzero na 30 mislukte pogingen. SQLite is nooit een service.

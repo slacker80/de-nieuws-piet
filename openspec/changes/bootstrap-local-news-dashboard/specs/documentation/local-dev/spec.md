@@ -86,6 +86,62 @@ Het systeem SHALL documentatie bieden voor reproduceerbare mobiele acceptatie bi
 - **When** ontwikkelaar mobiele responsiviteit documentatie sectie opent
 - **Then** bevat documentatie exacte Playwright test commando's, 360px viewport configuratie, empty-state assertions, horizontale scrolling verificatie, primaire content/navigation zichtbaarheid en health/state toegankelijkheid
 
+**Note:** Mobiele acceptatie is implementatie-neutral maar concrete en actionable. Gebruikt `@playwright/test` dependency, version pinned in project lockfile, verbant accounts/API keys/SaaS/browser cloud/paid services/external APIs voor alle tests.
+
+### Requirement: Exact Playwright test configuratie
+Het systeem SHALL exacte Playwright test configuratie bieden met version pinned dependency en verbod op externe services.
+
+#### Scenario: Exact Playwright test configuratie
+- **Given** mobiele test configuratie wordt opgezet
+- **When** project dependencies worden geïnstalleerd
+- **Then** wordt `@playwright/test` dependency exact version pinned in project lockfile
+- **And** test commando `npm run test:e2e` wordt gedefinieerd
+- **And** alle tests verbannen:
+  - Accounts/API keys
+  - SaaS/browser cloud services
+  - Paid services
+  - External APIs
+
+### Requirement: Exact Playwright test implementatie
+Het systeem SHALL exacte Playwright test implementatie bieden met 360px viewport en exacte assertions.
+
+#### Scenario: Exact Playwright test implementatie
+- **Given** mobiele test wordt uitgevoerd
+- **When** `npm run test:e2e` commando wordt uitgevoerd
+- **Then** wordt volgende exacte Playwright test uitgevoerd:
+
+```javascript
+// Exacte mobiele test implementatie
+const { test, expect } = require('@playwright/test');
+
+test('mobile responsive acceptance at 360px width', async ({ page }) => {
+  // Start local frontend beforehand with Compose readiness
+  await page.goto('http://localhost:3000/', { waitUntil: 'networkidle' });
+  
+  // Set exact viewport
+  await page.setViewportSize({ width: 360, height: 800 });
+  
+  // Assert marker text
+  await expect(page.locator('text=Nieuws Piet')).toBeVisible();
+  
+  // Assert visible nav landmark
+  await expect(page.locator('nav')).toBeVisible();
+  
+  // Assert visible main landmark
+  await expect(page.locator('main')).toBeVisible();
+  
+  // Assert empty state text
+  await expect(page.locator('text=Nog geen nieuws beschikbaar')).toBeVisible();
+  
+  // Assert no horizontal scrolling
+  const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+  const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
+  expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+});
+```
+
+**Note:** Test verbant expliciet accounts/API keys/SaaS/browser cloud/paid services/external APIs voor alle tests. Gebruikt alleen lokale test environment.
+
 ### Requirement: Troubleshooting documentatie
 Het systeem SHALL troubleshooting documentatie bieden voor gemeenschappelijke problemen.
 
