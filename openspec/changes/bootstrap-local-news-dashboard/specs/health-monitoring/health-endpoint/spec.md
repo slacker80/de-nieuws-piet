@@ -7,29 +7,32 @@ Biedt health monitoring capabilities voor de persoonlijke nieuwssite applicatie 
 ## TOEVOEGDE Requirements
 
 ### Requirement: Health endpoint beschikbaarheid
-Het systeem ZAL een health check endpoint op `/health` bieden die de operationele status van backend en SQLite componenten teruggeeft.
+Het systeem SHALL een health check endpoint op `/health` bieden die de operationele status van backend en SQLite componenten teruggeeft.
 
 #### Scenario: Health endpoint toegankelijkheid
-- **WANNEER** client `/health` endpoint acceseert
-- **DAN** geeft endpoint HTTP 200 status code met health informatie terug
+- **Given** client `/health` endpoint acceseert
+- **When** client `/health` endpoint aanvraagt
+- **Then** geeft endpoint deterministische health status terug met HTTP 200 wanneer beide backend en SQLite componenten gezond zijn
 
 ### Requirement: Health endpoint response formaat
-Het systeem ZAL deterministische minimale health status in JSON formaat teruggeven met exacte success/failure body en HTTP codes.
+Het systeem SHALL deterministische minimale health status in JSON formaat teruggeven met exacte success/failure body en HTTP codes.
 
 #### Scenario: Health endpoint JSON response
-- **WANNEER** health endpoint geaccesseerd wordt
-- **DAN** geeft response JSON met statusvelden voor backend en SQLite componenten terug
+- **Given** health endpoint geaccesseerd wordt
+- **When** health endpoint aanvraag wordt verwerkt
+- **Then** geeft response JSON met statusvelden voor backend en SQLite componenten terug
 
 ### Requirement: Health endpoint success response
-Het systeem ZAL exacte success JSON teruggeven met Content-Type application/json wanneer alle componenten gezond zijn.
+Het systeem MUST exacte success JSON teruggeven met Content-Type application/json wanneer alle componenten gezond zijn.
 
 #### Scenario: Health endpoint success response
-- **WANNEER** alle componenten gezond zijn
-- **DAN** geeft HTTP 200 met Content-Type application/json en volgende JSON terug:
+- **Given** alle componenten gezond zijn
+- **When** health endpoint aanvraag wordt verwerkt
+- **Then** geeft HTTP 200 met Content-Type application/json en volgende JSON terug:
 ```json
 {
   "status": "healthy",
-  "timestamp": "2026-09-27T10:47:00Z",
+  "timestamp": "<RFC3339_UTC_TIMESTAMP>",
   "components": {
     "backend": "healthy",
     "sqlite": "healthy"
@@ -37,16 +40,19 @@ Het systeem ZAL exacte success JSON teruggeven met Content-Type application/json
 }
 ```
 
+**Note:** timestamp field MUST be dynamic RFC3339 UTC timestamp. All other fields are exact.
+
 ### Requirement: Health endpoint SQLite failure response
-Het systeem ZAL HTTP 503 met Content-Type application/json teruggeven wanneer SQLite component ongezond is.
+Het systeem MUST HTTP 503 met Content-Type application/json teruggeven wanneer SQLite component ongezond is EN backend component gezond is.
 
 #### Scenario: Health endpoint SQLite failure response
-- **WANNEER** SQLite component ongezond is
-- **DAN** geeft HTTP 503 met Content-Type application/json en volgende JSON terug:
+- **Given** SQLite component ongezond is en backend component gezond is
+- **When** health endpoint aanvraag wordt verwerkt
+- **Then** geeft HTTP 503 met Content-Type application/json en volgende JSON terug:
 ```json
 {
   "status": "unhealthy",
-  "timestamp": "2026-09-27T10:47:00Z",
+  "timestamp": "<RFC3339_UTC_TIMESTAMP>",
   "components": {
     "backend": "healthy",
     "sqlite": "unhealthy"
@@ -55,41 +61,74 @@ Het systeem ZAL HTTP 503 met Content-Type application/json teruggeven wanneer SQ
 }
 ```
 
+**Note:** timestamp field MUST be dynamic RFC3339 UTC timestamp. All other fields are exact.
+
 ### Requirement: Health endpoint backend failure response
-Het systeem ZAL HTTP 500 met Content-Type application/json teruggeven wanneer backend component ongezond is.
+Het systeem MUST HTTP 500 met Content-Type application/json teruggeven wanneer backend component ongezond is EN SQLite component gezond is.
 
 #### Scenario: Health endpoint backend failure response
-- **WANNEER** backend component ongezond is
-- **DAN** geeft HTTP 500 met Content-Type application/json en volgende JSON terug:
+- **Given** backend component ongezond is en SQLite component gezond is
+- **When** health endpoint aanvraag wordt verwerkt
+- **Then** geeft HTTP 500 met Content-Type application/json en volgende JSON terug:
 ```json
 {
   "status": "unhealthy",
-  "timestamp": "2026-09-27T10:47:00Z",
+  "timestamp": "<RFC3339_UTC_TIMESTAMP>",
   "components": {
     "backend": "unhealthy",
     "sqlite": "healthy"
   },
-  "error": "Backend service not responding"
+  "error": "Backend internal health check failed"
 }
 ```
 
-### Requirement: Health endpoint SQLite timeout
-Het systeem ZAL SQLite database check binnen numerieke gebonden timeout afhandelen.
+**Note:** timestamp field MUST be dynamic RFC3339 UTC timestamp. All other fields are exact.
 
-#### Scenario: Health endpoint SQLite timeout
-- **WANNEER** SQLite health check wordt uitgevoerd
-- **DAN** is response time binnen 500ms
+### Requirement: Health endpoint combined failure response
+Het systeem MUST HTTP 503 met Content-Type application/json teruggeven wanneer beide backend en SQLite componenten ongezond zijn.
 
-### Requirement: Health endpoint SQLite unavailability test
-Het systeem ZAL test arrangement bieden om SQLite beschikbaarheid te verifiëren zonder out-of-scope services.
+#### Scenario: Health endpoint combined failure response
+- **Given** beide backend en SQLite componenten ongezond zijn
+- **When** health endpoint aanvraag wordt verwerkt
+- **Then** geeft HTTP 503 met Content-Type application/json en volgende JSON terug:
+```json
+{
+  "status": "unhealthy",
+  "timestamp": "<RFC3339_UTC_TIMESTAMP>",
+  "components": {
+    "backend": "unhealthy",
+    "sqlite": "unhealthy"
+  },
+  "error": "Backend internal health check failed and SQLite database not accessible"
+}
+```
 
-#### Scenario: SQLite unavailability test
-- **WANNEER** SQLite unavailability test wordt uitgevoerd
-- **DAN** kan SQLite database path tijdelijk verwijderen of onbereikbaar maken voor test
+**Note:** timestamp field MUST be dynamic RFC3339 UTC timestamp. All other fields are exact.
 
-### Requirement: Frontend smoke check
-Het systeem ZAL separate frontend smoke check bieden die frontend bereikbaarheid verifieert afzonderlijk van backend health endpoint.
+### Requirement: Health endpoint backend fault injection test
+Het systeem SHALL test arrangement bieden om backend health check intern te verifiëren zonder externe API/account/service afhankelijkheid.
 
-#### Scenario: Frontend smoke check
-- **WANNEER** frontend smoke check wordt uitgevoerd
-- **DAN** verifieert frontend bereikbaarheid op HTTP 200 response van frontend service
+#### Scenario: Backend fault injection test
+- **Given** backend fault injection test wordt uitgevoerd
+- **When** backend fault injection test wordt uitgevoerd
+- **Then** kan backend health check intern veroorzaakt worden om te falen voor test (bijvoorbeeld via configuratievlag)
+
+**Note:** This is a narrowly scoped test-only fault injection/configuration mechanism, not an external API/account/service. An unreachable API is a client connection failure outside `/health` contract.
+
+### Requirement: External frontend smoke verification
+Het systeem SHALL externe frontend smoke verificatie bieden die frontend bereikbaarheid verifieert na Docker Compose startup afzonderlijk van backend health endpoint.
+
+#### Scenario: Externe frontend smoke verificatie
+- **Given** Docker Compose startup voltooid is
+- **When** browser of HTTP client frontend's bestaande publieke URL aanvraagt
+- **Then** ontvangt client verwachte frontend pagina response met HTTP 200
+
+### Requirement: Health endpoint test assertions
+Het systeem SHALL test assertions bieden voor elke response: status, JSON fields/body, headers en timestamp format.
+
+#### Scenario: Health endpoint test assertions
+- **Given** health endpoint response ontvangen wordt
+- **When** response wordt geanalyseerd
+- **Then** wordt HTTP status code, Content-Type header, JSON body structure, timestamp format en component statusen gevalideerd
+
+**Note:** Test assertions zijn implementatie-neutraal maar actionable voor elke response type.

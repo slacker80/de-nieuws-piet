@@ -17,6 +17,8 @@
 - [ ] 2.5 Stel netwerkconfiguratie en service afhankelijkheden in
 - [ ] 2.6 Test docker-compose configuratie met `docker-compose config`
 - [ ] 2.7 Implementeer persistentie verificatie voor SQLite database
+- [ ] 2.8 Implementeer reproduceerbare Compose acceptatie met exacte `docker compose` commando's, service namen, frontend/backend URLs/ports, readiness conditions en curl/assertie commando's
+- [ ] 2.9 Implementeer data-safe rollback plan met exacte Compose stop/down commando's, onderscheid tussen preserving versus deleting SQLite volume/database, niet-destructieve backup voorafgaand aan destructieve actie, restauratie procedure en verificatie na herstel
 
 ## 3. Next.js PWA Skelet
 
@@ -40,9 +42,13 @@
 - [ ] 4.8 Test exact JSON success response met Content-Type application/json en HTTP 200
 - [ ] 4.9 Test exact JSON SQLite failure response met Content-Type application/json en HTTP 503
 - [ ] 4.10 Test exact JSON backend failure response met Content-Type application/json en HTTP 500
-- [ ] 4.11 Test SQLite timeout strategie (max 500ms response time)
-- [ ] 4.12 Test SQLite unavailability test arrangement (verwijder database path)
-- [ ] 4.13 Implementeer separate frontend smoke check
+- [ ] 4.11 Test exact JSON backend fault injection test response met Content-Type application/json en HTTP 500
+- [ ] 4.12 Test SQLite timeout strategie (max 500ms response time)
+- [ ] 4.13 Test SQLite onbeschikbaarheid test arrangement (verwijder database path)
+- [ ] 4.14 Implementeer externe frontend smoke verificatie na Docker Compose startup
+- [ ] 4.15 Implementeer deterministische en test-only failure testing met fault-injection mechanism voor SQLite-only failure, SQLite probe timeout (500ms), backend internal self-check failure en simultaneous failures
+- [ ] 4.16 Implementeer test assertions voor elke response: status, JSON fields/body, headers en timestamp format
+- [ ] 4.17 Implementeer test-only fault injection configuratie (bijvoorbeeld via environment variable) voor backend health check failure zonder externe API/account/service afhankelijkheid
 
 ## 5. SQLite Database Configuratie
 
@@ -63,7 +69,7 @@
 
 ## 7. Healthcheck Tests
 
-- [ ] 7.1 Creëer geautomatiseerde healthcheck tests voor backend en SQLite componenten
+- [ ] 7.1 Creëer geautomatiseerde healthcheck tests voor backend, SQLite en frontend componenten
 - [ ] 7.2 Implementeer tests voor Docker Compose services
 - [ ] 7.3 Implementeer tests voor Next.js applicatie
 - [ ] 7.4 Implementeer tests voor FastAPI health endpoint
@@ -79,3 +85,4 @@
 - [ ] 8.4 Verifieer mobiele responsiviteit van Next.js applicatie bij 360px
 - [ ] 8.5 Test applicatie functionaliteit met lege staat
 - [ ] 8.6 Documenteer succesvolle integratietest resultaten
+- [ ] 8.7 Implementeer reproduceerbare mobiele acceptatie bij 360px breedte met Playwright/framework, exacte viewport/expected empty-state assertions, geen horizontale scrolling, zichtbare primaire content/navigation, toegankelijke health/state

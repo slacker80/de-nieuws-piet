@@ -60,6 +60,42 @@ Het project vereist een lokale, mobiele persoonlijke nieuwssite met een monorepo
 - Minimale documentatie: Zou onboarding tijd verhogen en kennis silos creëren
 - Externe documentatie alleen: Zou moeilijker te synchroniseren zijn met de codebase
 
+### Compose Acceptance Beslissing
+**Beslissing**: Implementeer reproduceerbare Docker Compose acceptatie met exacte `docker compose` commando's, service namen, frontend/backend URLs/ports, readiness conditions en curl/assertie commando's.
+
+**Redenering**: Reproduceerbare Compose acceptatie zorgt ervoor dat alle ontwikkelaars dezelfde opstelling hebben en kan snel verifiëren dat de applicatie correct werkt. Exacte commando's en verificatie elimineren raadplegen en zorgen voor consistente testresultaten.
+
+**Alternatieven Overwogen**:
+- Handmatige acceptatie: Zou inconsistent zijn tussen teamleden
+- Geen acceptatie: Zou problemen later in het proces laten ontdekken
+
+### Data-Safe Rollback Beslissing
+**Beslissing**: Implementeer concrete data-safe rollback plan met exacte Compose stop/down commando's, onderscheid tussen preserving versus deleting SQLite volume/database, niet-destructieve backup voorafgaand aan destructieve actie, restauratie procedure en verificatie na herstel.
+
+**Redenering**: Data-safe rollback beschermt tegen gegevensverlies en biedt zekerheid dat het systeem kan herstellen van storingen. Exacte commando's en procedures zorgen ervoor dat het rollback plan kan worden uitgevoerd zonder twijfel.
+
+**Alternatieven Overwogen**:
+- Geen rollback plan: Zou risico's introduceren voor gegevensverlies
+- Extern backup: Zou externe afhankelijkheden introduceren
+
+### Failure Testing Beslissing
+**Beslissing**: Implementeer deterministische en test-only failure testing met fault-injection mechanism voor SQLite-only failure, SQLite probe timeout (500ms), backend internal self-check failure en simultaneous failures.
+
+**Redenering**: Deterministische failure testing zorgt ervoor dat het systeem kan worden getest onder verschillende storingen zonder externe afhankelijkheden. Test-only fault injection beschermt productieomgevingen van storingen.
+
+**Alternatieven Overwogen**:
+- Onbetrouwbare failure testing: Zou onbetrouwbare testresultaten produceren
+- Externe failure testing: Zou externe afhankelijkheden introduceren
+
+### Mobile Acceptance Beslissing
+**Beslissing**: Implementeer reproduceerbare mobiele acceptatie bij 360px breedte met Playwright/framework, exacte viewport/expected empty-state assertions, geen horizontale scrolling, zichtbare primaire content/navigation, toegankelijke health/state.
+
+**Redenering**: Reproduceerbare mobiele acceptatie zorgt ervoor dat de applicatie correct werkt op mobiele apparaten. Exacte viewport en assertions elimineren raadplegen en zorgen voor consistente mobiele testresultaten.
+
+**Alternatieven Overwogen**:
+- Handmatige mobiele acceptatie: Zou inconsistent zijn tussen apparaten
+- Geen mobiele acceptatie: Zou mobiele problemen later in het proces laten ontdekken
+
 ## Risico's / Trade-offs
 
 ### Risico: Docker afhankelijkheid
@@ -81,6 +117,16 @@ Het project vereist een lokale, mobiele persoonlijke nieuwssite met een monorepo
 **Trade-off**: De lokale ontwikkelopstelling kan significant verschillen van productieopstelling.
 
 **Mitigatie**: Documenteer de verschillen duidelijk en plan voor migratie naarmate het project groeit.
+
+### Risico: Test-only configuratie
+**Risico**: Test-only configuratie kan per ongeluk in productie terechtkomen.
+
+**Mitigatie**: Gebruik duidelijke environment variable namen (bijvoorbeeld `TEST_FAILURE_INJECTION`) en documenteer dat deze uitsluitend voor testomgevingen moeten worden gebruikt.
+
+### Risico: Mobiele test afhankelijkheid
+**Risico**: Mobiele test afhankelijkheid kan problemen introduceren als Playwright niet correct is geïnstalleerd.
+
+**Mitigatie**: Bied duidelijke installatie-instructies en alternatieve test methoden in documentatie.
 
 ## Migratie Plan
 

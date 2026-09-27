@@ -13,6 +13,10 @@ Dit wijzigingsvoorstel vestigt de fundamentele lokale ontwikkelomgeving voor het
 - **SQLite Configuratie**: Stel SQLite database configuratie en persistentie in
 - **Lokale Documentatie**: Creëer uitgebreide lokale ontwikkeldocumentatie
 - **Healthcheck Tests**: Implementeer geautomatiseerde healthchecks voor alle componenten
+- **Compose Acceptance**: Implementeer reproduceerbare Docker Compose acceptatie met exacte `docker compose` commando's, service namen, frontend/backend URLs/ports, readiness conditions en curl/assertie commando's
+- **Data-Safe Rollback**: Implementeer concrete data-safe rollback plan met exacte Compose stop/down commando's, onderscheid tussen preserving versus deleting SQLite volume/database, niet-destructieve backup voorafgaand aan destructieve actie, restauratie procedure en verificatie na herstel
+- **Failure Testing**: Implementeer deterministische en test-only failure testing met fault-injection mechanism voor SQLite-only failure, SQLite probe timeout (500ms), backend internal self-check failure en simultaneous failures
+- **Mobile Acceptance**: Implementeer reproduceerbare mobiele acceptatie bij 360px breedte met Playwright/framework, exacte viewport/expected empty-state assertions, geen horizontale scrolling, zichtbare primaire content/navigation, toegankelijke health/state
 
 ## Nieuwe Capabilities
 
@@ -21,13 +25,21 @@ Dit wijzigingsvoorstel vestigt de fundamentele lokale ontwikkelomgeving voor het
 - `health-monitoring/health-endpoint`: Biedt health check endpoint voor service statusbewaking
 - `database/local-sqlite`: Configureert SQLite database voor lokale ontwikkeling en testing
 - `documentation/local-dev`: Creëert uitgebreide lokale ontwikkeldocumentatie
+- `compose/acceptance`: Biedt reproduceerbare Docker Compose acceptatie met exacte commando's en verificatie
+- `rollback/data-safe`: Biedt concrete data-safe rollback plan met exacte commando's en procedures
+- `testing/failure-deterministic`: Biedt deterministische en test-only failure testing met fault-injection
+- `testing/mobile-acceptance`: Biedt reproduceerbare mobiele acceptatie bij 360px breedte
 
 ## Impact
 
 - **Code**: Nieuwe broncode in `src/` directories voor Next.js frontend en FastAPI backend
 - **Configuratie**: Docker Compose bestanden, SQLite configuratie en ontwikkelomgeving setup
 - **Afhankelijkheden**: Lokale ontwikkelafhankelijkheden voor Node.js, Python en Docker
-- **Testing**: Healthcheck tests en lokale ontwikkelvalidatiescripts
+- **Testing**: Healthcheck tests, failure testing en lokale ontwikkelvalidatiescripts
 - **Documentatie**: Lokale ontwikkeldocumentatie en setupgidsen
+- **Compose Acceptance**: Exacte `docker compose` commando's, service namen, URLs/ports, readiness conditions en curl/assertie commando's
+- **Data-Safe Rollback**: Exacte Compose stop/down commando's, SQLite volume/database preservation versus deletion, niet-destructieve backup, restauratie procedures en verificatie na herstel
+- **Failure Testing**: Test-only fault injection mechanism voor SQLite-only failure, SQLite probe timeout (500ms), backend internal self-check failure en simultaneous failures
+- **Mobile Acceptance**: Playwright/framework tests, 360px viewport configuratie, empty-state assertions, horizontale scrolling verificatie, primaire content/navigation zichtbaarheid en health/state toegankelijkheid
 
 Dit wijzigingsvoorstel vestigt de basis voor alle daaropvolgende features en zorgt voor een consistente lokale ontwikkelervaring voor het team.
