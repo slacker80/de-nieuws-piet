@@ -1,0 +1,66 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+.next/
+out/
+build/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Next.js gegenereerd
+next-env.d.ts
+
+# Test-/e2e-artefacten
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# Omgeving & secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python (backend)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Caches
+.cache/
+.turbo/
+.eslintcache
+.npm
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Platform-deploys (lokal, geen deployment in dit repo)
+.vercel/
+.netlify/
