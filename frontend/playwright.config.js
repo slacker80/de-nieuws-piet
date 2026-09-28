@@ -17,7 +17,10 @@ module.exports = {
           browserName: 'chromium',
           viewport: { width: 360, height: 800 },
           ignoreHTTPSErrors: true,
-          headless: false, // true voor CI/CD
+          // Standaard headed (zoals gedocumenteerd); automatisering zet
+          // PW_HEADLESS=1 voor een deterministische headless run zonder
+          // venster op het bureaublad. Geen cloud browser, geen SaaS.
+          headless: process.env.PW_HEADLESS === '1',
           baseURL: 'http://localhost:3000',
         },
       },

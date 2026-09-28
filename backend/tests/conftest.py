@@ -14,9 +14,34 @@ from fastapi.testclient import TestClient
 
 from app.config import read_fault_config
 from app.main import create_app
+from tests import runtime_env
 
 # Omgevingssleutels die de health-config bepalen; altijd opgeruimd na de test.
 _FAULT_ENV_KEYS = ("APP_ENV", "APP_HEALTH_FAULT", "APP_DB_PATH")
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Bouwt alles af wat deze testsessie startte (stack, `next start`, logs).
+
+    Alleen eigen resources: runtime_env registreert uitsluitend wat de sessie
+    zelf heeft gestart en laat bestaande services met rust.
+    """
+    runtime_env.cleanup_all()
+
+
+def pytest_runtest_logreport(report):
+    """Registreert elke overgeslagen test in `runtime_env.skipped_tests`.
+
+    De verplichte lokale suite draait als laatste een guard op die lijst, zodat
+    een sessie met overgeslagen tests nooit als "volledig gedraaid" kan
+    doorgaan (geen misleidende voltooiing).
+    """
+    if report.outcome != "skipped":
+        return
+    reden = report.longrepr
+    if isinstance(reden, tuple) and len(reden) == 3:
+        reden = reden[2]
+    runtime_env.skipped_tests.append(f"{report.nodeid}: {reden}")
 
 
 @pytest.fixture(autouse=True)

@@ -20,12 +20,9 @@ from collections import defaultdict
 import pytest
 from pathlib import Path
 
-# Controleer of Docker beschikbaar is
-try:
-    import docker
-    DOCKER_AVAILABLE = True
-except ImportError:
-    DOCKER_AVAILABLE = False
+# Geen Docker-detectie nodig: deze tests verifiëren statisch spec-, design-,
+# tasks- en documentatie-inhoud. Runtime-Docker-tests staan in
+# tests/test_integration.py en tests/test_rollback_runtime.py (CLI-detectie).
 
 
 # ==== Hulppatronen voor concrete invarianten ================================
