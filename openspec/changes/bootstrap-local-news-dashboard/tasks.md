@@ -17,49 +17,49 @@
 - [x] 2.5 Stel netwerkconfiguratie en service afhankelijkheden in
 - [x] 2.6 Valideer Compose configuratie met `docker compose config` (v2 syntax, nooit `docker-compose`)
 - [x] 2.7 Implementeer persistentie verificatie voor SQLite database
-- [ ] 2.8 Implementeer reproduceerbare Compose acceptatie met exact `docker compose up -d --build`, service namen, frontend/backend URLs/ports, readiness conditions en curl/assertie commando's
-- [ ] 2.9 Implementeer uitvoerbare data-safe rollback/restore met read-only backup bron, backup-integriteitsvalidatie, feitelijk restore voor preserve én destructive pad, en `docker compose down -v` uitsluitend als opt-in (volgorde: backup → validatie → opt-in `down -v` → restore in het opnieuw aangemaakte volume → verificatie; restore nooit vóór `down -v`)
+- [x] 2.8 Implementeer reproduceerbare Compose acceptatie met exact `docker compose up -d --build`, service namen, frontend/backend URLs/ports, readiness conditions en curl/assertie commando's
+- [x] 2.9 Implementeer uitvoerbare data-safe rollback/restore met read-only backup bron, backup-integriteitsvalidatie, feitelijk restore voor preserve én destructive pad, en `docker compose down -v` uitsluitend als opt-in (volgorde: backup → validatie → opt-in `down -v` → restore in het opnieuw aangemaakte volume → verificatie; restore nooit vóór `down -v`)
 
 ## 3. Next.js PWA Skelet
 
-- [ ] 3.1 Initialiseer Next.js project met PWA-capaciteiten
-- [ ] 3.2 Creëer basis applicatie structuur met pages/ en components/ directories
-- [ ] 3.3 Implementeer responsief ontwerp met mobile-first aanpak
-- [ ] 3.4 Creëer landing page met lege staat voor nieuwsartikelen bij 360px mobiele breedte
-- [ ] 3.5 Configureer PWA manifest met valid linked manifest
-- [ ] 3.6 Stel service-worker/offline status expliciet in (uitgesloten of alleen skelet)
-- [ ] 3.7 Test Next.js applicatie lokaal
+- [x] 3.1 Initialiseer Next.js project met PWA-capaciteiten
+- [x] 3.2 Creëer basis applicatie structuur met pages/ en components/ directories
+- [x] 3.3 Implementeer responsief ontwerp met mobile-first aanpak
+- [x] 3.4 Creëer landing page met lege staat voor nieuwsartikelen bij 360px mobiele breedte
+- [x] 3.5 Configureer PWA manifest met valid linked manifest
+- [x] 3.6 Stel service-worker/offline status expliciet in (uitgesloten of alleen skelet)
+- [x] 3.7 Test Next.js applicatie lokaal
 
 ## 4. FastAPI Health Endpoint
 
-- [ ] 4.1 Creëer FastAPI applicatie met health endpoint op /health
-- [ ] 4.2 Implementeer health checks voor backend en SQLite componenten alleen
-- [ ] 4.3 Configureer FastAPI met deterministische minimale contract: exact JSON success/failure body en HTTP codes
-- [ ] 4.4 Implementeer gebonden SQLite check/timeout strategie met server probe budget <=500ms
-- [ ] 4.5 Voeg health endpoint toe aan Docker Compose health checks
-- [ ] 4.6 Test health endpoint met curl en verifieer response formaat
-- [ ] 4.7 Implementeer gezonde en failure verificatie
-- [ ] 4.8 Test exact JSON success response met Content-Type application/json en HTTP 200
-- [ ] 4.9 Test exact JSON SQLite failure response met Content-Type application/json en HTTP 503
-- [ ] 4.10 Test exact JSON backend failure response met Content-Type application/json en HTTP 500
-- [ ] 4.11 Test exact JSON backend fault injection test response met Content-Type application/json en HTTP 500
-- [ ] 4.12 Test `sqlite_timeout` fault met server probe budget <=500ms en client assertion budget <=1000ms
-- [ ] 4.13 Test SQLite onbeschikbaarheid via test double (geen verwijderen of wijzigen van database bestanden)
-- [ ] 4.14 Implementeer externe frontend smoke verificatie op `http://localhost:3000/` na Docker Compose startup (NOOIT `/health`)
-- [ ] 4.15 Implementeer deterministische en test-only failure testing met fault-injection voor SQLite-only failure, SQLite probe timeout, backend internal self-check failure en simultaneous failures
-- [ ] 4.16 Implementeer test assertions voor elke response: status, JSON fields/body, headers en timestamp format
-- [ ] 4.17 Implementeer test-only fault configuratie via `APP_ENV=test` guard en `APP_HEALTH_FAULT` whitelist (`sqlite`, `sqlite_timeout`, `backend`, `all`) zonder externe API/account/service afhankelijkheid
-- [ ] 4.18 Implementeer app-factory/proces-isolatie per health test en reset cleanup zonder filesystem database mutaties
-- [ ] 4.19 Test deterministisch gedrag bij onbekende `APP_HEALTH_FAULT` waarden en bij `APP_ENV` ≠ `test` (normale gezonde respons)
+- [x] 4.1 Creëer FastAPI applicatie met health endpoint op /health
+- [x] 4.2 Implementeer health checks voor backend en SQLite componenten alleen
+- [x] 4.3 Configureer FastAPI met deterministische minimale contract: exact JSON success/failure body en HTTP codes
+- [x] 4.4 Implementeer gebonden SQLite check/timeout strategie met server probe budget <=500ms
+- [x] 4.5 Voeg health endpoint toe aan Docker Compose health checks
+- [x] 4.6 Test health endpoint met curl en verifieer response formaat
+- [x] 4.7 Implementeer gezonde en failure verificatie
+- [x] 4.8 Test exact JSON success response met Content-Type application/json en HTTP 200
+- [x] 4.9 Test exact JSON SQLite failure response met Content-Type application/json en HTTP 503
+- [x] 4.10 Test exact JSON backend failure response met Content-Type application/json en HTTP 500
+- [x] 4.11 Test exact JSON backend fault injection test response met Content-Type application/json en HTTP 500
+- [x] 4.12 Test `sqlite_timeout` fault met server probe budget <=500ms en client assertion budget <=1000ms
+- [x] 4.13 Test SQLite onbeschikbaarheid via test double (geen verwijderen of wijzigen van database bestanden)
+- [x] 4.14 Implementeer externe frontend smoke verificatie op `http://localhost:3000/` na Docker Compose startup (NOOIT `/health`)
+- [x] 4.15 Implementeer deterministische en test-only failure testing met fault-injection voor SQLite-only failure, SQLite probe timeout, backend internal self-check failure en simultaneous failures
+- [x] 4.16 Implementeer test assertions voor elke response: status, JSON fields/body, headers en timestamp format
+- [x] 4.17 Implementeer test-only fault configuratie via `APP_ENV=test` guard en `APP_HEALTH_FAULT` whitelist (`sqlite`, `sqlite_timeout`, `backend`, `all`) zonder externe API/account/service afhankelijkheid
+- [x] 4.18 Implementeer app-factory/proces-isolatie per health test en reset cleanup zonder filesystem database mutaties
+- [x] 4.19 Test deterministisch gedrag bij onbekende `APP_HEALTH_FAULT` waarden en bij `APP_ENV` ≠ `test` (normale gezonde respons)
 
 ## 5. SQLite Database Configuratie
 
-- [ ] 5.1 Creëer SQLite database met minimale configuratie en connectie lifecycle
-- [ ] 5.2 Implementeer database initialisatiescript voor connectiviteit en persistentie
-- [ ] 5.3 Stel SQLite connectie management in zonder pooling
-- [ ] 5.4 Test database operaties en persistentie
-- [ ] 5.5 Verifieer SQLite init/persistence across backend container recreation
-- [ ] 5.6 Verifieer volume identiteit `nieuws_piet_sqlite_data` in Compose én in losse `docker run` containers (zelfde volume, geen project prefix)
+- [x] 5.1 Creëer SQLite database met minimale configuratie en connectie lifecycle
+- [x] 5.2 Implementeer database initialisatiescript voor connectiviteit en persistentie
+- [x] 5.3 Stel SQLite connectie management in zonder pooling
+- [x] 5.4 Test database operaties en persistentie
+- [x] 5.5 Verifieer SQLite init/persistence across backend container recreation
+- [x] 5.6 Verifieer volume identiteit `nieuws_piet_sqlite_data` in Compose én in losse `docker run` containers (zelfde volume, geen project prefix)
 
 ## 6. Lokale Documentatie
 

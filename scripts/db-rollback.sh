@@ -26,9 +26,10 @@
 #   scripts/db-rollback.sh restore [backupnaam]
 #       Backup (na validatie) feitelijk terugzetten naar /app/data/news.db.
 #   scripts/db-rollback.sh preserve [--data-only]
-#       backup -> validatie -> `docker compose down` (volume behouden) ->
-#       `docker compose up -d --build` -> restore wanneer /app/data/news.db
-#       ontbreekt of faalt op integriteit -> verificatie.
+#       backup (of bestaande backup wanneer de DB ontbreekt/ongeldig is) ->
+#       validatie -> `docker compose down` (volume behouden) -> restore wanneer
+#       /app/data/news.db ontbreekt of faalt op integriteit, vóórdat de backend
+#       die kan initialiseren -> `docker compose up -d --build` -> verificatie.
 #   scripts/db-rollback.sh reset --allow-volume-removal [--data-only]
 #       Opt-in destructieve reset: backup -> validatie -> `docker compose down -v`
 #       -> restore in het opnieuw aangemaakte volume -> verificatie.
@@ -201,6 +202,22 @@ PY
 
 # Volledige verificatie na herstel: integriteit + data-marker + /health.
 verify_full() {
+  echo "==> Wachten op backend-readiness na herstart (max 30 pogingen, sleep 1, curl --max-time 5)"
+  # Dezelfde readiness-conditie als de Compose acceptatie: de backend heeft
+  # na `docker compose up -d --build` enige tijd nodig tot /health antwoordt.
+  # Zonder deze wachtfase zou de verificatie hieronder racen met de startup.
+  local attempt ready=false
+  for attempt in $(seq 1 30); do
+    if [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://localhost:8000/health)" = "200" ]; then
+      ready=true
+      break
+    fi
+    sleep 1
+  done
+  if [ "${ready}" != true ]; then
+    echo "FOUT: backend /health niet bereikbaar na 30 pogingen" >&2
+    return 1
+  fi
   echo "==> Verificatie: integriteit + data-marker (docker compose exec) + /health"
   docker compose exec -i backend python - <<'PY'
 import sqlite3, sys
@@ -258,19 +275,37 @@ cmd_restore() {
 
 cmd_preserve() {
   echo "==== Preserve pad (volume behouden, GEEN -v) ===="
-  make_backup
-  validate_backup "${BACKUP_NAME}" # bij falen breekt set -e af: GEEN destructieve actie
+
+  # Backend-image voor de read-only databeoordeling hieronder (idempotent;
+  # cache-hit wanneer het image al bestaat).
+  docker compose build backend >/dev/null
+
+  # Stap 1: DB-status beoordelen VÓÓR de backup (read-only, maakt niets aan).
+  # Bij een ontbrekende of ongeldige DB is er niets te back-uppen en valt
+  # preserve terug op de bestaande backup. Beide uitkomsten worden hieronder
+  # gevalideerd vóór elke schrijfactie; bij falen breekt set -e af.
+  if db_ok; then
+    make_backup
+  else
+    echo "==> /app/data/news.db ontbreekt of faalt op integriteit: bestaande backup hergebruiken"
+    resolve_backup_name
+  fi
+  validate_backup "${BACKUP_NAME}" # bij falen breekt set -e af: GEEN schrijfactie
 
   echo "==> Non-destructive down (docker compose down, volume blijft behouden)"
   docker compose down
 
-  start_stack
-
+  # Stap 2: DB-status opnieuw beoordelen NA down en VÓÓR `docker compose up`.
+  # De backend initialiseert een ontbrekende database bij startup (taak 5.1);
+  # controleren ná de start zou de verse, lege database goedkeuren en de
+  # gevalideerde backup nooit terugzetten (stil dataverlies).
   if ! db_ok; then
-    echo "==> /app/data/news.db ontbreekt of faalt op integriteit: restore"
+    echo "==> /app/data/news.db ontbreekt of faalt op integriteit: restore vóór backend-start"
     copy_backup_into_volume "${BACKUP_NAME}"
-    start_stack
+    verify_data
   fi
+
+  start_stack
 
   verify
   echo "OK: preserve-pad voltooid (volume ${VOLUME} behouden)"
