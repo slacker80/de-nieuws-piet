@@ -7,6 +7,18 @@
 #   database  /app/data/news.db
 #   backup    ./backups/news.db.<UTC timestamp>.bak  (host, buiten het named volume)
 #
+# Isolatie (optioneel, voor verificatie in een wegwerp-context):
+#   NIEUWS_PIET_DB_VOLUME        overschrijft de volumenaam
+#                                 (default exact `nieuws_piet_sqlite_data`)
+#   NIEUWS_PIET_DB_BACKUP_DIR    overschrijft de backup-directory
+#                                 (default `backups`, absoluut of relatief aan
+#                                 de repo-root)
+#   COMPOSE_PROJECT_NAME / COMPOSE_FILE
+#                                 standaard Compose-mechaniek om projectnaam en
+#                                 compose-bestand te kiezen (bijv. een tijdelijke
+#                                 kopie met een unieke volumenaam)
+#   Zonder deze variabelen draait het script exact op de spec-identiteit hierboven.
+#
 # Vaste regels (data-safe):
 #   * Standaard is non-destructief: `docker compose down` (zonder -v).
 #   * `docker compose down -v` is uitsluitend opt-in via --allow-volume-removal
@@ -17,6 +29,12 @@
 #     Restore staat NOOIT vóór `docker compose down -v`.
 #   * De backup wordt altijd read-only geopend (`mode=ro`, `:ro`-mounts); er wordt
 #     niets in de backup of in het volume geschreven vóór validatie.
+#   * Elke restore-verificatie toetst naast `PRAGMA integrity_check == ok` en
+#     ten minste één tabel ook expliciet `bootstrap_marker.initialized` op exact
+#     `nieuws-piet`; een ontbrekende of afwijkende marker wordt geweigerd.
+#   * `NIEUWS_PIET_DB_VOLUME` moet een Docker named-volume-identificator zijn:
+#     geen paden (absoluut of relatief), geen slashes/backslashes, geen kolonnen
+#     en geen witruimte. Een afkeur gebeurt vóór elke docker-opdracht.
 #
 # Subcommando's:
 #   scripts/db-rollback.sh backup
@@ -43,9 +61,22 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-VOLUME="nieuws_piet_sqlite_data"
-BACKUP_DIR="backups"
+# Identiteit is per omgeving overrulebaar zodat de uitvoerbare procedure ook in
+# een geïsoleerde, wegwerp-context kan worden geverifieerd zonder de echte
+# gebruikersdata (volume `nieuws_piet_sqlite_data`) te raken. De standaarden
+# hieronder zijn exact de spec-waarden; zonder deze variabelen verandert er niets.
+VOLUME="${NIEUWS_PIET_DB_VOLUME:-nieuws_piet_sqlite_data}"
+BACKUP_DIR="${NIEUWS_PIET_DB_BACKUP_DIR:-backups}"
 ALPINE_IMAGE="alpine:3.20" # tag-adres, geen digest-pin (bootstrap-afhankelijkheid)
+
+# Absoluut pad naar de backup-directory: de default is relatief aan de repo-root,
+# een overrule mag absoluut zijn (gebruikt in -v mounts van `docker run`).
+backup_dir_abs() {
+  case "${BACKUP_DIR}" in
+    /*) printf '%s\n' "${BACKUP_DIR}" ;;
+    *) printf '%s\n' "$(pwd)/${BACKUP_DIR}" ;;
+  esac
+}
 
 MODE=""
 BACKUP_ARG=""
@@ -73,6 +104,19 @@ die() {
   exit 1
 }
 
+# Strikte validatie van een resource-identificator (named volume). Paden en
+# vreemde tekens worden geweigerd zodat `NIEUWS_PIET_DB_VOLUME` nooit als bind
+# mount of als andermans resource kan worden gebruikt.
+validate_volume_name() {
+  local naam="$1"
+  if [ -z "${naam}" ]; then
+    die "NIEUWS_PIET_DB_VOLUME is leeg; verwacht een Docker named-volume-naam"
+  fi
+  if ! [[ "${naam}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]]; then
+    die "NIEUWS_PIET_DB_VOLUME is geen geldige Docker named-volume-naam: '${naam}' (geen paden, geen slashes/backslashes, geen kolonnen, geen witruimte)"
+  fi
+}
+
 # Nieuwste backup in ./backups (anders exit met melding).
 resolve_backup_name() {
   if [ -n "${BACKUP_ARG}" ]; then
@@ -85,7 +129,7 @@ resolve_backup_name() {
         latest="${f}"
       fi
     done
-    [ -n "${latest}" ] || die "geen backup gevonden in ./${BACKUP_DIR}"
+    [ -n "${latest}" ] || die "geen backup gevonden in ${BACKUP_DIR}"
     BACKUP_NAME="$(basename "${latest}")"
   fi
   [ -f "${BACKUP_DIR}/${BACKUP_NAME}" ] || die "backup ontbreekt: ${BACKUP_DIR}/${BACKUP_NAME}"
@@ -108,17 +152,17 @@ make_backup() {
   docker run --rm \
     -e BACKUP_NAME="${BACKUP_NAME}" \
     -v "${VOLUME}:/source:ro" \
-    -v "$(pwd)/${BACKUP_DIR}":/backup \
+    -v "$(backup_dir_abs)":/backup \
     "${ALPINE_IMAGE}" sh -c 'set -eu; cp /source/news.db "/backup/${BACKUP_NAME}"'
 
-  echo "backup: ./${BACKUP_DIR}/${BACKUP_NAME}"
+  echo "backup: ${BACKUP_DIR}/${BACKUP_NAME}"
 }
 
 # Backup read-only openen en `PRAGMA integrity_check` uitvoeren; exact `ok`
 # is vereist voor elke vervolgactie. Bij elk ander resultaat: exit != 0.
 validate_backup() {
   local name="$1" code
-  echo "==> Integriteitsvalidatie van ./${BACKUP_DIR}/${name} (PRAGMA integrity_check)"
+  echo "==> Integriteitsvalidatie van ${BACKUP_DIR}/${name} (PRAGMA integrity_check)"
   docker compose build backend >/dev/null
   code="$(cat <<'PY'
 import os, sqlite3, sys
@@ -138,7 +182,7 @@ PY
   docker compose run --rm --no-deps -T \
     --entrypoint python \
     -e BACKUP_NAME="${name}" \
-    -v "$(pwd)/${BACKUP_DIR}":/backups:ro \
+    -v "$(backup_dir_abs)":/backups:ro \
     backend -c "${code}"
 }
 
@@ -151,12 +195,12 @@ copy_backup_into_volume() {
   docker run --rm \
     -e BACKUP_NAME="${name}" \
     -v "${VOLUME}:/target" \
-    -v "$(pwd)/${BACKUP_DIR}":/backup:ro \
+    -v "$(backup_dir_abs)":/backup:ro \
     "${ALPINE_IMAGE}" sh -c 'set -eu; cp "/backup/${BACKUP_NAME}" /target/news.db'
 }
 
-# Data-verificatie in het volume (integriteit + ten minste één tabel),
-# uitgevoerd vanuit een verse container.
+# Data-verificatie in het volume (integriteit + ten minste één tabel + de
+# bootstrap-data-marker), uitgevoerd vanuit een verse container.
 verify_data() {
   local code
   code="$(cat <<'PY'
@@ -165,15 +209,27 @@ import sqlite3, sys
 conn = sqlite3.connect('/app/data/news.db')
 integrity = conn.execute('PRAGMA integrity_check').fetchone()
 tables = conn.execute("SELECT count(*) FROM sqlite_master WHERE type='table'").fetchone()
+try:
+    marker = conn.execute(
+        "SELECT value FROM bootstrap_marker WHERE key = 'initialized'"
+    ).fetchone()
+except sqlite3.Error as exc:
+    print('marker-check gefaald:', exc)
+    marker = None
 conn.close()
 
 integrity_ok = integrity is not None and integrity[0] == 'ok'
 tables_ok = tables is not None and tables[0] > 0
-print('integrity_check:', integrity[0] if integrity else 'none', '| tables:', tables[0] if tables else 0)
-sys.exit(0 if integrity_ok and tables_ok else 1)
+marker_ok = marker is not None and marker[0] == 'nieuws-piet'
+print(
+    'integrity_check:', integrity[0] if integrity else 'none',
+    '| tables:', tables[0] if tables else 0,
+    '| marker:', marker[0] if marker else 'geen marker',
+)
+sys.exit(0 if integrity_ok and tables_ok and marker_ok else 1)
 PY
 )"
-  echo "==> Verificatie: integriteit + data-marker"
+  echo "==> Verificatie: integriteit + data-marker (bootstrap_marker.initialized = nieuws-piet)"
   docker compose run --rm --no-deps -T --entrypoint python backend -c "${code}"
 }
 
@@ -225,12 +281,24 @@ import sqlite3, sys
 conn = sqlite3.connect('/app/data/news.db')
 integrity = conn.execute('PRAGMA integrity_check').fetchone()
 tables = conn.execute("SELECT count(*) FROM sqlite_master WHERE type='table'").fetchone()
+try:
+    marker = conn.execute(
+        "SELECT value FROM bootstrap_marker WHERE key = 'initialized'"
+    ).fetchone()
+except sqlite3.Error as exc:
+    print('marker-check gefaald:', exc)
+    marker = None
 conn.close()
 
 integrity_ok = integrity is not None and integrity[0] == 'ok'
 tables_ok = tables is not None and tables[0] > 0
-print('integrity_check:', integrity[0] if integrity else 'none', '| tables:', tables[0] if tables else 0)
-sys.exit(0 if integrity_ok and tables_ok else 1)
+marker_ok = marker is not None and marker[0] == 'nieuws-piet'
+print(
+    'integrity_check:', integrity[0] if integrity else 'none',
+    '| tables:', tables[0] if tables else 0,
+    '| marker:', marker[0] if marker else 'geen marker',
+)
+sys.exit(0 if integrity_ok and tables_ok and marker_ok else 1)
 PY
 
   test "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://localhost:8000/health)" = "200"
@@ -256,13 +324,13 @@ start_stack() {
 cmd_backup() {
   make_backup
   validate_backup "${BACKUP_NAME}"
-  echo "OK: backup gemaakt en gevalideerd: ./${BACKUP_DIR}/${BACKUP_NAME}"
+  echo "OK: backup gemaakt en gevalideerd: ${BACKUP_DIR}/${BACKUP_NAME}"
 }
 
 cmd_validate() {
   resolve_backup_name
   validate_backup "${BACKUP_NAME}"
-  echo "OK: backup geldig: ./${BACKUP_DIR}/${BACKUP_NAME}"
+  echo "OK: backup geldig: ${BACKUP_DIR}/${BACKUP_NAME}"
 }
 
 cmd_restore() {
@@ -270,7 +338,7 @@ cmd_restore() {
   validate_backup "${BACKUP_NAME}"
   copy_backup_into_volume "${BACKUP_NAME}"
   verify_data
-  echo "OK: backup teruggezet in volume ${VOLUME}: ./${BACKUP_DIR}/${BACKUP_NAME}"
+  echo "OK: backup teruggezet in volume ${VOLUME}: ${BACKUP_DIR}/${BACKUP_NAME}"
 }
 
 cmd_preserve() {
@@ -339,7 +407,7 @@ MSG
   start_stack
   verify
 
-  echo "OK: destructieve reset voltooid (backup ./${BACKUP_DIR}/${BACKUP_NAME} hersteld)"
+  echo "OK: destructieve reset voltooid (backup ${BACKUP_DIR}/${BACKUP_NAME} hersteld)"
 }
 
 # ---- argumenten ----
@@ -369,6 +437,10 @@ for arg in "$@"; do
       ;;
   esac
 done
+
+# Resource-validatie vóór elke subcommando-uitvoering: een afwijkende volumenaam
+# wordt hier al geweigerd, nog vóór de eerste docker-opdracht.
+validate_volume_name "${VOLUME}"
 
 case "${MODE}" in
   backup) cmd_backup ;;

@@ -13,15 +13,12 @@ import subprocess
 import time
 
 import pytest
-import requests
 from pathlib import Path
 
-# Controleer of Docker beschikbaar is
-try:
-    import docker
-    DOCKER_AVAILABLE = True
-except ImportError:
-    DOCKER_AVAILABLE = False
+# Detectie via de Docker CLI en de daemon (geen Python-`docker`-module: die is
+# geen project-afhankelijkheid en zou tests laten overslaan terwijl de CLI wél
+# beschikbaar is).
+from tests import runtime_env
 
 
 # ==== Artefact-paden en semantische hulpfuncties ================================
@@ -300,8 +297,7 @@ def _mobiele_bronnen() -> list:
 
 def test_9_1_1_verify_db_rollback_named_volume() -> None:
     """9.1.1 Verifieer exacte DB rollback named volume `nieuws_piet_sqlite_data` (exacte volume identiteit)."""
-    if not DOCKER_AVAILABLE:
-        pytest.skip("Docker niet beschikbaar")
+    runtime_env.require_docker()
 
     # Controleer volume definitie in compose.yaml
     compose_path = Path("/home/peter/git/de-nieuws-piet/compose.yaml")
@@ -317,8 +313,7 @@ def test_9_1_1_verify_db_rollback_named_volume() -> None:
 
 def test_9_1_2_verify_backend_mount_and_db_file() -> None:
     """9.1.2 Verifieer backend mount `/app/data` en database file `/app/data/news.db`."""
-    if not DOCKER_AVAILABLE:
-        pytest.skip("Docker niet beschikbaar")
+    runtime_env.require_docker()
 
     # Controleer backend volume mount in compose.yaml
     compose_path = Path("/home/peter/git/de-nieuws-piet/compose.yaml")
@@ -364,19 +359,43 @@ def test_9_1_4_verify_exact_shell_command_sequence() -> None:
 
 def test_9_1_5_verify_stop_backend_mkdir_backups_backup() -> None:
     """9.1.5 Verifieer stop backend, `mkdir -p backups`, backup vanaf READ-ONLY named volume mount, non-destructive `docker compose down`."""
-    if not DOCKER_AVAILABLE:
-        pytest.skip("Docker niet beschikbaar")
+    # Het uitvoerbare pad staat in scripts/db-rollback.sh (er bestaat geen
+    # apart preserve-rollback-script); hier wordt die bron zelf gecontroleerd.
+    script = _lees(SCRIPT_ROLLBACK)
 
-    # Controleer backup script
-    backup_script = Path("/home/peter/git/de-nieuws-piet/scripts/preserve-rollback.sh")
-    if backup_script.exists():
-        content = backup_script.read_text()
-        assert "docker compose stop backend" in content
-        assert "mkdir -p backups" in content
-        assert "docker compose down" in content
-        assert "read-only" in content
-    else:
-        pytest.skip("backup script niet gevonden")
+    # 1. Backend stoppen vóór de backup: geen schrijvers naar de database.
+    make_backup = _bash_functie(script, "make_backup")
+    assert make_backup, "make_backup ontbreekt in db-rollback.sh"
+    assert "docker compose stop backend" in make_backup, (
+        "de backup stopt de backend niet"
+    )
+
+    # 2. `mkdir -p backups` op de host, buiten het named volume.
+    backup_dir = _bash_var(script, "BACKUP_DIR")
+    assert backup_dir in ("backups", "${NIEUWS_PIET_DB_BACKUP_DIR:-backups}"), (
+        f"BACKUP_DIR is niet de spec-waarde `backups`: {backup_dir}"
+    )
+    assert re.search(r'mkdir -p "\$\{BACKUP_DIR\}"', make_backup), (
+        "geen `mkdir -p` voor de backup-directory"
+    )
+    assert re.search(
+        r"\./backups/news\.db\.<UTC timestamp>\.bak", script
+    ), "de backup-identiteit ontbreekt in de script-header"
+
+    # 3. De bron is READ-ONLY: alleen-lezen mount van het named volume.
+    assert re.search(r'-v "\$\{VOLUME\}:/source:ro"', make_backup), (
+        "de backup wordt niet vanaf een READ-ONLY named-volume-mount gemaakt"
+    )
+
+    # 4. Non-destructief pad: `docker compose down` zonder `-v`.
+    preserve = _bash_functie(script, "cmd_preserve")
+    assert preserve, "cmd_preserve ontbreekt in db-rollback.sh"
+    assert re.search(r"^[ \t]*docker compose down[ \t]*$", preserve, re.M), (
+        "het preserve-pad voert geen non-destructieve `docker compose down` uit"
+    )
+    assert not re.search(r"^[ \t]*docker compose down -v", preserve, re.M), (
+        "het preserve-pad verwijdert het volume"
+    )
 
 
 def test_9_1_6_verify_backup_integrity_validation() -> None:
@@ -441,8 +460,7 @@ def test_9_1_7_verify_feitelijk_restore() -> None:
 
 def test_9_1_8_verify_docker_compose_up_after_restore() -> None:
     """9.1.8 Verifieer `docker compose up -d --build` na restore en integriteitsverificatie via `docker compose exec -i backend python` (`PRAGMA integrity_check` + ten minste één tabel)."""
-    if not DOCKER_AVAILABLE:
-        pytest.skip("Docker niet beschikbaar")
+    runtime_env.require_docker()
 
     # Controleer dat de spec `docker compose up -d --build` beschrijft
     spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/database/local-sqlite/spec.md")
@@ -568,9 +586,99 @@ def test_9_1_10_verify_docker_compose_down_v_opt_in_only() -> None:
     assert re.search(
         r"ALLOW_VOLUME_REMOVAL", reset
     ), "geen opt-in-guard rond `docker compose down -v`"
-    assert re.search(
-        r'VOLUME="nieuws_piet_sqlite_data"', script
+    volume_regel = re.search(r'^VOLUME="([^"]*)"$', script, re.M)
+    assert volume_regel, "VOLUME-variabele ontbreekt in db-rollback.sh"
+    assert volume_regel.group(1) in (
+        "nieuws_piet_sqlite_data",
+        "${NIEUWS_PIET_DB_VOLUME:-nieuws_piet_sqlite_data}",
     ), "herstel gebeurt niet in het named volume `nieuws_piet_sqlite_data`"
+
+
+# ==== Strikte volume-/resource-identificator-validatie =====================
+
+ONGELDIGE_IDENTIFICATOREN = (
+    "/absoluut/pad",
+    "relatief/pad",
+    "./pad",
+    "nieuws db",
+    "nieuws:db",
+    "nieuws\\db",
+    "-leidend",
+    ".",
+    "..",
+    "  spaties  ",
+    "naam\nmet-regeleinde",
+    "naam;rm -rf",
+)
+
+
+def _draai_script_met_volume(volume: str, *args: str) -> dict:
+    """Draait `scripts/db-rollback.sh` met een opgegeven `NIEUWS_PIET_DB_VOLUME`."""
+    env = runtime_env.build_env({"NIEUWS_PIET_DB_VOLUME": volume})
+    proc = subprocess.run(
+        ["bash", str(SCRIPT_ROLLBACK), *args],
+        cwd=str(ROOT),
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    return {"rc": proc.returncode, "output": f"{proc.stdout}\n{proc.stderr}"}
+
+
+def test_9_1_volumenaam_weigert_pad_slash_en_witruimte() -> None:
+    """`NIEUWS_PIET_DB_VOLUME` wordt als Docker named-volume-identificator behandeld.
+
+    Paden, slashes, backslashes, kolonnen, witruimte, leidende tekens en
+    niet-bestaande namen worden vóór élke docker-opdracht geweigerd (geen
+    bind-mount, geen andermans pad). `--help` blijft met een geldige naam
+    werken, zodat de validatie de dispatch niet overslaat.
+    """
+    script = _lees(SCRIPT_ROLLBACK)
+    assert "validate_volume_name" in script, "validatie-functie ontbreekt"
+    plek_validatie = script.index('validate_volume_name "${VOLUME}"')
+    plek_dispatch = script.index('case "${MODE}" in')
+    assert plek_validatie < plek_dispatch, (
+        "de volumenaam wordt niet vóór de dispatch gevalideerd"
+    )
+
+    for naam in ONGELDIGE_IDENTIFICATOREN:
+        resultaat = _draai_script_met_volume(naam, "--help")
+        assert resultaat["rc"] == 1, (
+            f"{naam!r} werd niet als volumenaam geweigerd:\n{resultaat['output']}"
+        )
+        assert "geen geldige Docker named-volume-naam:" in resultaat["output"], (
+            resultaat["output"]
+        )
+        assert "Gebruik:" not in resultaat["output"], (
+            f"de dispatch liep vóór de validatie voor {naam!r}"
+        )
+
+    # Lege waarde: `${NIEUWS_PIET_DB_VOLUME:-...}` valt terug op de named volume,
+    # zodat een lege override nooit een lege volumenaam oplevert.
+    leeg = _draai_script_met_volume("", "--help")
+    assert leeg["rc"] == 0, leeg["output"]
+    assert "geen geldige Docker named-volume-naam" not in leeg["output"], leeg["output"]
+
+    geldig = _draai_script_met_volume("nieuws_piet_sqlite_data_test", "--help")
+    assert geldig["rc"] == 0, geldig["output"]
+    assert "Gebruik:" in geldig["output"], geldig["output"]
+
+
+def test_9_1_resource_identificatoren_gestrenge_validatie() -> None:
+    """Ook project-, volume- en netwerknamen volgen die strenge identificatorregel.
+
+    `isolated_context()`/`ensure_stack_up()` gebruiken dezelfde regel, zodat een
+    test nooit een pad of vreemde identificator als Compose-projectnaam doorgeeft.
+    """
+    for naam in ONGELDIGE_IDENTIFICATOREN:
+        with pytest.raises(AssertionError):
+            runtime_env.validate_docker_name(naam, "volumenaam")
+        with pytest.raises(AssertionError):
+            runtime_env.validate_docker_name(naam, "projectnaam")
+
+    for naam in ("nieuws_piet_sqlite_data", "nieuws-piet-net_1", "np.2", "P1"):
+        assert runtime_env.validate_docker_name(naam, "netwerknaam") == naam
 
 
 # ==== 9.2 Health Test-only Config Verificatie (8 taken) ================================
@@ -1156,6 +1264,8 @@ def test_exact_verification_test_suite() -> None:
     test_9_1_8_verify_docker_compose_up_after_restore()
     test_9_1_9_verify_curl_health_assertie()
     test_9_1_10_verify_docker_compose_down_v_opt_in_only()
+    test_9_1_volumenaam_weigert_pad_slash_en_witruimte()
+    test_9_1_resource_identificatoren_gestrenge_validatie()
 
     # Test 2: Health Test-only Config Verificatie
     test_9_2_1_verify_health_test_only_exact_config()
