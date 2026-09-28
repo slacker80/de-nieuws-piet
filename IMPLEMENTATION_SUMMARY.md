@@ -120,56 +120,24 @@ openspec instructions apply --change "bootstrap-local-news-dashboard" --json
 git status --short
 ```
 
-**Resultaat** (werkbome, ongecommitteerd):
+**Resultaat**: leeg — de werkboom is schoon, er zijn geen staged of ongestage wijzigingen.
 
-```
- M IMPLEMENTATION_SUMMARY.md
-AM backend/tests/test_discrete_verified_tasks.py
-AM backend/tests/test_exact_verification.py
-A  backend/tests/test_healthcheck.py
-A  backend/tests/test_integration.py
- M frontend/package.json
-A  frontend/playwright.config.js
-A  frontend/tests/mobile.spec.js
- M openspec/changes/bootstrap-local-news-dashboard/tasks.md
-A  scripts/readiness-loop.sh
-A  scripts/run-mobile-e2e.sh
-```
+Alle werk zit in onderstaande commits op `apply/bootstrap-local-news-dashboard`, gepusht naar `origin` (normaal, zonder force):
 
-(`A` = toegevoegd en al in de index; `AM` = index + werkboom-wijziging; ` M` = alleen werkboom. `test_exact_verification.py` is `AM`: de herbouwde versie staat alleen in de werkboom, de index bevat nog de oorspronkelijke 603-regelige versie.)
+| Commit | Boodschap |
+| --- | --- |
+| `cc32c54` | `test: add local health and verification coverage` |
+| `386d9c2` | `test: add mobile e2e readiness workflow` |
+| `cdc405f` | `docs: record verified bootstrap progress` |
 
 ### 4. Git Diff
 
 ```bash
-git diff --stat
+git diff --check
+git diff --cached --check
 ```
 
-**Resultaat** (alleen de werkboom-verschillen t.o.v. de index):
-
-```
- IMPLEMENTATION_SUMMARY.md                          | 319 +++-----
- backend/tests/test_discrete_verified_tasks.py      | 501 +++++++++---
- backend/tests/test_exact_verification.py           | 877 +++++++++++++++++----
- frontend/package.json                              |   2 +-
- .../bootstrap-local-news-dashboard/tasks.md        | 210 ++---
- 5 files changed, 1366 insertions(+), 543 deletions(-)
-```
-
-**Staged** (`git diff --cached --stat`, los hiervan):
-
-```
- backend/tests/test_discrete_verified_tasks.py | 556 +++++
- backend/tests/test_exact_verification.py      | 603 +++++
- backend/tests/test_healthcheck.py             | 308 +++
- backend/tests/test_integration.py             | 423 ++++
- frontend/playwright.config.js                 |  25 +
- frontend/tests/mobile.spec.js                 |  30 +
- scripts/readiness-loop.sh                     |  77 ++
- scripts/run-mobile-e2e.sh                     |  21 +
- 8 files changed, 2043 insertions(+)
-```
-
-`git diff --check` → exit 0. `git diff --cached --check` → exit 0 (de 5× trailing whitespace in `scripts/readiness-loop.sh` op regel 32, 39, 60, 66 en 74 zijn verwijderd; `bash -n` blijft exit 0).
+**Resultaat**: beide exit 0. De 5× trailing whitespace in `scripts/readiness-loop.sh` (regel 32, 39, 60, 66 en 74) zijn verwijderd; `bash -n scripts/readiness-loop.sh scripts/run-mobile-e2e.sh` → exit 0.
 
 ## Controles
 
@@ -213,10 +181,9 @@ cd backend && python3 -m pytest
 
 ## Restrisico
 
-1. **`backend/tests/test_exact_verification.py` is hersteld en groen** (35 passed, 5 skipped in plaats van 15 failed). De 15 eerder falende tests zijn herschreven naar inhoudelijke controles: JSON-parse van `package.json`/`package-lock.json`, regex op de inhoud van `compose.yaml`, extractie van het `validate_backup`-/`verify_full`-functieblok uit `scripts/db-rollback.sh`, `MAX_ATTEMPTS`/`SLEEP_SECONDS`/`--max-time`-waarden in de readiness-loops, de `HEALTH_FAULT_WHITELIST` in `backend/app/config.py` en zichtbaarheids-/netwerkisolatie-asserties in `frontend/tests/mobile.spec.js`. **Let op**: dit zijn statische controles. Ze valideren de aanwezigheid en volgorde in code, niet het runtime-gedrag; de 5 overgeslagen tests en de open runtime-taken blijven onverminderd open. Deze wijziging is in deze ronde **alleen** in de working tree gezet (bestand is `AM`: staged-versie = oude versie).
+1. **`backend/tests/test_exact_verification.py` is hersteld en groen** (35 passed, 5 skipped in plaats van 15 failed). De 15 eerder falende tests zijn herschreven naar inhoudelijke controles: JSON-parse van `package.json`/`package-lock.json`, regex op de inhoud van `compose.yaml`, extractie van het `validate_backup`-/`verify_full`-functieblok uit `scripts/db-rollback.sh`, `MAX_ATTEMPTS`/`SLEEP_SECONDS`/`--max-time`-waarden in de readiness-loops, de `HEALTH_FAULT_WHITELIST` in `backend/app/config.py` en zichtbaarheids-/netwerkisolatie-asserties in `frontend/tests/mobile.spec.js`. **Let op**: dit zijn statische controles. Ze valideren de aanwezigheid en volgorde in code, niet het runtime-gedrag; de 5 overgeslagen tests en de open runtime-taken blijven onverminderd open. De uiteindelijke versie van het bestand zit in commit `cc32c54`.
 2. **Geen runtime-verificatie**: Docker, de readiness loop, `npm run test:e2e` en de restore-procedure zijn niet uitgevoerd. Alle claims over secties 8 en 9 zijn daarom planningsclaims, geen waargenomen resultaten.
 3. **Leaf-telling**: de verdeling 144/118/26 gaat uit van de 10 aggregaat-parents met `(N taken)`. 8.1 heeft inspringende kinderen 8.2-8.8 maar wordt — conform de taaklijst — als leaf geteld; telt 8.1 als parent, dan zijn het 143/118/25.
-4. **Niet gecommit**: de working tree bevat zowel staged als ongestagede wijzigingen en is bewust voor review zo gelaten.
 
 ## Conclusie
 
