@@ -76,8 +76,8 @@
 ## 7. Healthcheck Tests
 
 - [x] 7.1 Creëer geautomatiseerde healthcheck tests voor backend, SQLite en frontend componenten
-- [ ] 7.2 Implementeer tests voor Docker Compose services
-- [ ] 7.3 Implementeer tests voor Next.js applicatie
+- [x] 7.2 Implementeer tests voor Docker Compose services
+- [x] 7.3 Implementeer tests voor Next.js applicatie
 - [x] 7.4 Implementeer tests voor FastAPI health endpoint
 - [x] 7.5 Implementeer tests voor SQLite database
 - [x] 7.6 Voer healthcheck tests uit en verifieer dat alle tests slagen
@@ -85,28 +85,28 @@
 
 ## 8. Integratietests
 
-- [ ] 8.1 Test complete applicatie startup met `docker compose up -d --build` (clean-checkout)
-  - [ ] 8.2 Verifieer dat frontend en backend toegankelijk zijn
-  - [ ] 8.3 Test health endpoint integratie met Docker Compose
-  - [ ] 8.4 Verifieer mobiele responsiviteit van Next.js applicatie bij 360px
-  - [ ] 8.5 Test applicatie functionaliteit met lege staat
-  - [ ] 8.6 Documenteer succesvolle integratietest resultaten
-  - [ ] 8.7 Implementeer reproduceerbare mobiele acceptatie bij 360x800 met Playwright, exacte viewport/expected empty-state assertions, geen horizontale scrolling, zichtbare primaire content/navigation
-  - [ ] 8.8 Voer de frontend/backend readiness loop uit en laat die slagen vóór `npm run test:e2e`
+- [x] 8.1 Test complete applicatie startup met `docker compose up -d --build` (clean-checkout)
+  - [x] 8.2 Verifieer dat frontend en backend toegankelijk zijn
+  - [x] 8.3 Test health endpoint integratie met Docker Compose
+  - [x] 8.4 Verifieer mobiele responsiviteit van Next.js applicatie bij 360px
+  - [x] 8.5 Test applicatie functionaliteit met lege staat
+  - [x] 8.6 Documenteer succesvolle integratietest resultaten
+  - [x] 8.7 Implementeer reproduceerbare mobiele acceptatie bij 360x800 met Playwright, exacte viewport/expected empty-state assertions, geen horizontale scrolling, zichtbare primaire content/navigation
+  - [x] 8.8 Voer de frontend/backend readiness loop uit en laat die slagen vóór `npm run test:e2e`
 
 ## 9. Exacte Verificatie Taken
 
-- [ ] 9.1 Data-safe Rollback Verificatie (10 taken)
+- [x] 9.1 Data-safe Rollback Verificatie (10 taken)
   - [x] 9.1.1 Verifieer exacte DB rollback named volume `nieuws_piet_sqlite_data` (exacte volume identiteit)
   - [x] 9.1.2 Verifieer backend mount `/app/data` en database file `/app/data/news.db`
   - [x] 9.1.3 Verifieer host backup `./backups/news.db.<UTC timestamp>.bak` outside named volume
   - [x] 9.1.4 Verifieer exact shell command sequence met `docker compose`/`docker` en standaard shell (geen `docker-compose` v1)
   - [x] 9.1.5 Verifieer stop backend, `mkdir -p backups`, backup vanaf READ-ONLY named volume mount, non-destructive `docker compose down`
   - [x] 9.1.6 Verifieer backup-integriteitsvalidatie met `PRAGMA integrity_check` = `ok` vóór elke destructieve actie; bij falen stopt de procedure
-  - [ ] 9.1.7 Verifieer feitelijk restore: backup terugzetten naar `/app/data/news.db` in het named volume voor preserve pad én voor destructive reset pad (destructive pad: pas ná opt-in `docker compose down -v`, in het opnieuw aangemaakte volume; nooit vóór `down -v`)
-  - [ ] 9.1.8 Verifieer `docker compose up -d --build` na restore en integriteitsverificatie via `docker compose exec -i backend python` (`PRAGMA integrity_check` + ten minste één tabel)
-  - [ ] 9.1.9 Verifieer `curl` /health assertie (exact HTTP 200 én JSON body `status: healthy`)
-  - [ ] 9.1.10 Verifieer `docker compose down -v` uitsluitend als opt-in en alléén na geslaagde backup en integriteitsvalidatie, met restore direct ná `down -v` in het opnieuw aangemaakte volume `nieuws_piet_sqlite_data` en verificatie van integriteit, data-marker en health direct na restore; verifieer dat GEEN enige stap restore vóór `down -v` voorschrijft
+  - [x] 9.1.7 Verifieer feitelijk restore: backup terugzetten naar `/app/data/news.db` in het named volume voor preserve pad én voor destructive reset pad (destructive pad: pas ná opt-in `docker compose down -v`, in het opnieuw aangemaakte volume; nooit vóór `down -v`)
+  - [x] 9.1.8 Verifieer `docker compose up -d --build` na restore en integriteitsverificatie via `docker compose exec -i backend python` (`PRAGMA integrity_check` + ten minste één tabel)
+  - [x] 9.1.9 Verifieer `curl` /health assertie (exact HTTP 200 én JSON body `status: healthy`)
+  - [x] 9.1.10 Verifieer `docker compose down -v` uitsluitend als opt-in en alléén na geslaagde backup en integriteitsvalidatie, met restore direct ná `down -v` in het opnieuw aangemaakte volume `nieuws_piet_sqlite_data` en verificatie van integriteit, data-marker en health direct na restore; verifieer dat GEEN enige stap restore vóór `down -v` voorschrijft
 
 - [x] 9.2 Health Test-only Config Verificatie (8 taken)
   - [x] 9.2.1 Verifieer health test-only exact config: ONLY when `APP_ENV=test`
@@ -129,19 +129,19 @@
   - [x] 9.3.8 Verifieer SQLite never a service
   - [x] 9.3.9 Verifieer frontend smoke op `http://localhost:3000/` en NOOIT `/health`
 
-- [ ] 9.4 Mobile Exact Verificatie (12 taken)
-  - [ ] 9.4.1 Verifieer local dev dependency `@playwright/test` version pinned in project lockfile
-  - [ ] 9.4.2 Verifieer command `npm run test:e2e`
-  - [ ] 9.4.3 Verifieer start local frontend beforehand met `docker compose up -d --build` + readiness loop
-  - [ ] 9.4.4 Verifieer `npm ci` en lokale browser setup met `npx playwright install chromium` (geen cloud browser)
-  - [ ] 9.4.5 Verifieer test `http://localhost:3000/`, viewport 360x800 vóór navigatie
-  - [ ] 9.4.6 Verifieer assert marker text `Nieuws Piet`
-  - [ ] 9.4.7 Verifieer visible nav landmark
-  - [ ] 9.4.8 Verifieer visible main landmark
-  - [ ] 9.4.9 Verifieer text `Nog geen nieuws beschikbaar`
-  - [ ] 9.4.10 Verifieer `scrollWidth <= clientWidth`
-  - [ ] 9.4.11 Verifieer stabiele UI readiness met auto-retry assertions (geen vaste slaaptijd) en netwerkisolatie (alleen localhost toegestaan)
-  - [ ] 9.4.12 Verifieer explicitly ban accounts/API keys/SaaS/browser cloud/paid services/external APIs for all tests
+- [x] 9.4 Mobile Exact Verificatie (12 taken)
+  - [x] 9.4.1 Verifieer local dev dependency `@playwright/test` version pinned in project lockfile
+  - [x] 9.4.2 Verifieer command `npm run test:e2e`
+  - [x] 9.4.3 Verifieer start local frontend beforehand met `docker compose up -d --build` + readiness loop
+  - [x] 9.4.4 Verifieer `npm ci` en lokale browser setup met `npx playwright install chromium` (geen cloud browser)
+  - [x] 9.4.5 Verifieer test `http://localhost:3000/`, viewport 360x800 vóór navigatie
+  - [x] 9.4.6 Verifieer assert marker text `Nieuws Piet`
+  - [x] 9.4.7 Verifieer visible nav landmark
+  - [x] 9.4.8 Verifieer visible main landmark
+  - [x] 9.4.9 Verifieer text `Nog geen nieuws beschikbaar`
+  - [x] 9.4.10 Verifieer `scrollWidth <= clientWidth`
+  - [x] 9.4.11 Verifieer stabiele UI readiness met auto-retry assertions (geen vaste slaaptijd) en netwerkisolatie (alleen localhost toegestaan)
+  - [x] 9.4.12 Verifieer explicitly ban accounts/API keys/SaaS/browser cloud/paid services/external APIs for all tests
 
 ## 10. Discrete Verified Tasks
 
