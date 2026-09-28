@@ -17,13 +17,19 @@ context: |
 rules:
   proposal:
     - Benoem doel, scope, niet-doelen, risico's, privacy-impact en rollback.
+    - Houd iedere change zelfstandig begrijpelijk, testbaar, releasable en terugdraaibaar.
+    - Open toekomstige roadmapchanges pas just-in-time nadat de voorganger is geaccepteerd.
     - Maak geen externe accounts, betaalde API's of publieke hosting zonder expliciete toestemming.
   specs:
     - Schrijf requirements met Given/When/Then-scenario's.
-    - Leg bronattributie, deduplicatie en lokale toegang expliciet vast.
+    - Beschrijf observeerbaar gedrag en belangrijke garanties; plaats geen complete implementatiescripts in specs.
+    - Leg bronattributie, deduplicatie en lokale toegang expliciet vast wanneer die capability ze raakt.
+    - Neem normale, negatieve en grensscenario's op, inclusief lege data en herhaalde uitvoering waar relevant.
   design:
-    - Leg datamodel, API-contracten, foutafhandeling en teststrategie vast.
+    - Leg datamodel, API-contracten, foutafhandeling, teststrategie en rollback proportioneel vast.
     - Houd frontend, backend en ingestie als afzonderlijke modules.
+    - Verklaar externe netwerktoegang, datastromen, kosten en LLM/providerkeuzes expliciet.
   tasks:
-    - Maak kleine, uitvoerbare en testbare taken.
-    - Voeg per taak een verificatiestap toe.
+    - Maak kleine, uitvoerbare en testbare taken zonder dubbele verificatiechecklists.
+    - Voeg per taak een concrete verificatiestap toe en vink pas af na echte uitvoering.
+    - Voeg menselijke acceptatie, OpenSpec-validatie en archive als afzonderlijke afsluitstappen toe.

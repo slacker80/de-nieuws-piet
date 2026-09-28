@@ -73,60 +73,20 @@ Een broncatalogus blijft bewerkbaar in de website. Elke bron krijgt een betrouwb
 
 ## OpenSpec-aanpak
 
-OpenSpec wordt de bron van waarheid voor gedrag en wijzigingen. Iedere zelfstandige feature krijgt een eigen change-map onder `openspec/changes/<change-naam>/` met `proposal.md`, `design.md`, `tasks.md` en delta-specs. De vaste flow is: explore -> propose -> review -> apply -> test -> archive.
+OpenSpec is de bron van waarheid voor betekenisvolle gedragswijzigingen. De vaste flow is:
 
-## Startstructuur
-
-```
-openspec/
-  specs/
-    news-ingestion/spec.md
-    ranking-and-feedback/spec.md
-    dashboard/spec.md
-    notifications/spec.md
-    privacy-and-access/spec.md
-  changes/
-  config.yaml
+```text
+explore → propose → menselijke review → validate → apply → test → acceptatie → archive
 ```
 
-## Eerste OpenSpec-changes
+De bootstrap is geïmplementeerd en technisch geverifieerd, maar nog niet formeel gearchiveerd naar `openspec/specs/`. Rond die lifecycle eerst af; open daarna alleen de eerstvolgende change.
 
-1. **bootstrap-local-news-dashboard**
-   - Doel: repository, Docker Compose, FastAPI, Next.js, SQLite, healthcheck en lokale toegang.
-   - Acceptatie: één commando start frontend, API en database; mobiele startpagina toont een lege toestand.
+- **Roadmap met alle volgende changes en copy-pasteprompts:** [`docs/openspec-roadmap.md`](docs/openspec-roadmap.md)
+- **Praktische apply-handleiding:** [`docs/applying-openspec-changes.md`](docs/applying-openspec-changes.md)
 
-2. **add-source-catalog-and-ingestion**
-   - Doel: broncatalogus, RSS-ophaling, URL-normalisatie, opslag en idempotente scheduler.
-   - Acceptatie: minimaal tien geconfigureerde bronnen, dubbele items worden niet opnieuw opgeslagen.
+De eerstvolgende change is `add-source-catalog`. RSS-ingestie, ranking, UI, feedback, deduplicatie, LLM-samenvattingen, dagelijkse planning en Telegram worden daarna afzonderlijke changes. Zo blijft iedere change begrijpelijk, testbaar en terugdraaibaar.
 
-3. **add-topic-classification-and-ranking**
-   - Doel: onderwerpen, gewichten en basisrangschikking voor AI, Kubernetes, Linux, T Cloud/soevereiniteit, geopolitiek en Ethereum.
-   - Acceptatie: elk geïmporteerd item heeft één of meer onderwerpen en een uitlegbare score.
-
-4. **add-daily-briefing-ui**
-   - Doel: mobiele Vandaag-pagina, rubrieken, bronlinks en leesstatus.
-   - Acceptatie: pagina werkt op mobiel en desktop en toont topitems per rubriek.
-
-5. **add-feedback-learning**
-   - Doel: feedbackknoppen en transparante voorkeursscores.
-   - Acceptatie: feedback verandert toekomstige ranking aantoonbaar; gebruiker kan voorkeuren terugdraaien.
-
-6. **add-summary-and-deduplication**
-   - Doel: brongebonden Nederlandse samenvattingen en clustering rond dezelfde gebeurtenis.
-   - Acceptatie: iedere samenvatting toont bronlinks; verwante artikelen worden als dossier samengevoegd.
-
-7. **add-notification-policy**
-   - Doel: optionele Telegram-alerts voor alleen hoog-prioritair nieuws.
-   - Acceptatie: geen notificatie zonder ingestelde drempel; notificatie bevat bronlink en reden van prioriteit.
-
-## Werkwijze per change
-
-- `/opsx:explore`: verken alternatieven en risico's zonder code te wijzigen.
-- `/opsx:propose <change>`: schrijf doel, scope, niet-doelen, acceptatiecriteria en rollback.
-- Review: akkoord op voorstel voordat de implementatie start.
-- `/opsx:apply`: implementeer kleine, toetsbare taken uit tasks.md.
-- Test: unit-, integratie- en mobiele browserchecks; controleer idempotentie en bronattributie.
-- `/opsx:archive`: neem goedgekeurde delta-specs op in openspec/specs zodat de actuele werking altijd vastligt.
+Maak toekomstige `openspec/changes/<change-id>/`-directories pas just-in-time met `/opsx-propose`, nadat de voorgaande change is geaccepteerd en gearchiveerd. Gebruik de in deze repository aanwezige `/opsx-...`-commando's; lokale autocomplete en `openspec --help` zijn leidend.
 
 ## Eerste beslissingen voor de bouw
 
@@ -164,11 +124,9 @@ Voeg AWS toe als zelfstandig onderwerp. Focus op EKS, Bedrock, IAM/security, net
 - Gebruik onderscheid tussen productreleases, technische referentiearchitectuur, security/compliance, prijs/contractnieuws en marketing. Marketing krijgt standaard een lagere score.
 - Voeg per bron een veld toe voor cloud: azure, aws, t-cloud, otc, multi-cloud of sovereign-cloud.
 
-## OpenSpec-uitbreiding
+## OpenSpec-indeling
 
-8. **add-ai-tools-and-hyperscaler-coverage**
-   - Doel: broncatalogus, classificatie en dashboardonderwerpen uitbreiden met AI-trends/tools, Azure en AWS.
-   - Acceptatie: items uit de nieuwe bronnen krijgen één of meer correcte onderwerpen; Kubernetes-, security- en sovereign-cloud-items tonen kruislabels; marketingitems worden lager gerangschikt dan technische of security-relevante updates.
+Deze uitbreiding is geen zelfstandige catch-all change. De bronvelden en startbronnen vallen onder `add-source-catalog`; de onderwerpen, kruislabels en marketingweging vallen onder `add-explainable-topic-ranking`. Zie de roadmap voor de precieze grenzen.
 
 ## Installatie
 

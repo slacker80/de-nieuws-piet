@@ -62,55 +62,21 @@ Niet-functionele eisen
 - Bron-URL en publicatiedatum worden per kaart bewaard.
 
 OpenSpec-aanpak
-OpenSpec wordt de bron van waarheid voor gedrag en wijzigingen. Iedere zelfstandige feature krijgt een eigen change-map onder openspec/changes/<change-naam>/ met proposal.md, design.md, tasks.md en delta-specs. De vaste flow is: explore -> propose -> review -> apply -> test -> archive.
+De actuele changevolgorde, scopes en copy-pasteprompts staan in docs/openspec-roadmap.md. De praktische lifecycle van explore tot archive staat in docs/applying-openspec-changes.md.
 
-Startstructuur
-openspec/
-  specs/
-    news-ingestion/spec.md
-    ranking-and-feedback/spec.md
-    dashboard/spec.md
-    notifications/spec.md
-    privacy-and-access/spec.md
-  changes/
-  config.yaml
-
-Eerste OpenSpec-changes
-1. bootstrap-local-news-dashboard
-   Doel: repository, Docker Compose, FastAPI, Next.js, SQLite, healthcheck en lokale toegang.
-   Acceptatie: één commando start frontend, API en database; mobiele startpagina toont een lege toestand.
-
-2. add-source-catalog-and-ingestion
-   Doel: broncatalogus, RSS-ophaling, URL-normalisatie, opslag en idempotente scheduler.
-   Acceptatie: minimaal tien geconfigureerde bronnen, dubbele items worden niet opnieuw opgeslagen.
-
-3. add-topic-classification-and-ranking
-   Doel: onderwerpen, gewichten en basisrangschikking voor AI, Kubernetes, Linux, T Cloud/soevereiniteit, geopolitiek en Ethereum.
-   Acceptatie: elk geïmporteerd item heeft één of meer onderwerpen en een uitlegbare score.
-
+De bootstrap wordt eerst menselijk geaccepteerd, gevalideerd en gearchiveerd. Daarna wordt alleen de eerstvolgende change just-in-time geopend:
+1. add-source-catalog
+2. add-idempotent-rss-ingestion
+3. add-explainable-topic-ranking
 4. add-daily-briefing-ui
-   Doel: mobiele Vandaag-pagina, rubrieken, bronlinks en leesstatus.
-   Acceptatie: pagina werkt op mobiel en desktop en toont topitems per rubriek.
+5. add-explicit-feedback-preferences
+6. add-event-deduplication
+7. add-grounded-dutch-summaries
+8. add-daily-news-job
+9. add-telegram-notification-policy
 
-5. add-feedback-learning
-   Doel: feedbackknoppen en transparante voorkeursscores.
-   Acceptatie: feedback verandert toekomstige ranking aantoonbaar; gebruiker kan voorkeuren terugdraaien.
-
-6. add-summary-and-deduplication
-   Doel: brongebonden Nederlandse samenvattingen en clustering rond dezelfde gebeurtenis.
-   Acceptatie: iedere samenvatting toont bronlinks; verwante artikelen worden als dossier samengevoegd.
-
-7. add-notification-policy
-   Doel: optionele Telegram-alerts voor alleen hoog-prioritair nieuws.
-   Acceptatie: geen notificatie zonder ingestelde drempel; notificatie bevat bronlink en reden van prioriteit.
-
-Werkwijze per change
-- /opsx:explore: verken alternatieven en risico's zonder code te wijzigen.
-- /opsx:propose <change>: schrijf doel, scope, niet-doelen, acceptatiecriteria en rollback.
-- Review: akkoord op voorstel voordat de implementatie start.
-- /opsx:apply: implementeer kleine, toetsbare taken uit tasks.md.
-- Test: unit-, integratie- en mobiele browserchecks; controleer idempotentie en bronattributie.
-- /opsx:archive: neem goedgekeurde delta-specs op in openspec/specs zodat de actuele werking altijd vastligt.
+Vaste flow: /opsx-explore -> /opsx-propose -> menselijke review -> openspec validate -> /opsx-apply -> test en acceptatie -> /opsx-archive.
+Maak niet alle change-directories vooraf aan en voer nooit meerdere roadmapchanges in één apply uit.
 
 Eerste beslissingen voor de bouw
 - Begin met RSS en officiële bronnen; voeg betaalde bronnen of API's pas later toe.
@@ -142,8 +108,6 @@ Aanpassing aan classificatie en ranking
 - Gebruik onderscheid tussen productreleases, technische referentiearchitectuur, security/compliance, prijs/contractnieuws en marketing. Marketing krijgt standaard een lagere score.
 - Voeg per bron een veld toe voor cloud: azure, aws, t-cloud, otc, multi-cloud of sovereign-cloud.
 
-OpenSpec-uitbreiding
-8. add-ai-tools-and-hyperscaler-coverage
-   Doel: broncatalogus, classificatie en dashboardonderwerpen uitbreiden met AI-trends/tools, Azure en AWS.
-   Acceptatie: items uit de nieuwe bronnen krijgen één of meer correcte onderwerpen; Kubernetes-, security- en sovereign-cloud-items tonen kruislabels; marketingitems worden lager gerangschikt dan technische of security-relevante updates.
+OpenSpec-indeling
+De bronvelden en startbronnen vallen onder add-source-catalog. De onderwerpen, kruislabels en marketingweging vallen onder add-explainable-topic-ranking; hiervoor komt geen brede catch-all change.
 
