@@ -1,0 +1,72 @@
+# Nieuws Piet — lokale Docker Compose-opstelling (Compose v2).
+#
+# Alleen `frontend` en `backend` zijn services; SQLite is NOOIT een service.
+# De database staat als bestand /app/data/news.db in de named volume
+# `nieuws_piet_sqlite_data` (exacte Docker-volume-identiteit, zonder
+# Compose-projectprefix), uitsluitend gemount aan de backend.
+#
+# Starten:  docker compose up -d --build
+# De v1-syntax `docker-compose` is verboden.
+# Ontwikkelvariant: docker compose -f compose.yaml -f compose.dev.yaml up -d --build
+# (compose.dev.yaml is met opzet géén auto-geladen `compose.override.yaml`,
+#  zodat de acceptatie `docker compose up -d --build` productiegedrag houdt.)
+
+services:
+  frontend:
+    # Next.js build- en run-opzet staat in frontend/Dockerfile
+    # (stages: deps -> builder -> runner; zie taak 2.2).
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      # Readiness-condition: backend start vóór frontend (take 2.5, ongewijzigd).
+      # De /health healthcheck van de backend staat hieronder (taak 4.5);
+      # de feitelijke readiness-verificatie gebeurt via de readiness loop.
+      backend:
+        condition: service_started
+    networks:
+      - nieuws_piet
+
+  backend:
+    # FastAPI-afhankelijkheden komen uit backend/requirements.txt (gepind,
+    # ongewijzigd); de startopdracht (`uvicorn app.main:app`) staat als CMD
+    # in backend/Dockerfile (zie taak 2.3).
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      # Backend mount /app/data; database file /app/data/news.db (taak 2.4).
+      - nieuws_piet_sqlite_data:/app/data
+    healthcheck:
+      # /health endpoint als Compose health check (sectie 4, taak 4.5).
+      # Alleen backend-component; SQLite is onderdeel van ditzelfde contract.
+      # python:3.12-slim bevat geen curl, daarom een Python-check op exact
+      # HTTP 200 + JSON `status: healthy` (net als de readiness loop).
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import json,urllib.request;r=urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=4);d=json.load(r);assert r.status==200 and d.get('status')=='healthy',d",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - nieuws_piet
+
+volumes:
+  nieuws_piet_sqlite_data:
+    # Exacte volume-identiteit: geen Compose-projectprefix, zodat Compose en
+    # losse `docker -v nieuws_piet_sqlite_data:...` commando's hetzelfde volume raken.
+    name: nieuws_piet_sqlite_data
+
+networks:
+  nieuws_piet:
+    name: nieuws_piet_net
+    driver: bridge

@@ -2,9 +2,9 @@
 
 ## Doel
 
-Biedt health monitoring capabilities voor de persoonlijke nieuwssite applicatie met een speciale health check endpoint die deterministische minimale contracten volgt.
+Biedt health monitoring capabilities voor de persoonlijke nieuwssite applicatie met een speciale health check endpoint die deterministische minimale contracten volgt en een deterministische, test-only fault-injection met app-factory isolatie.
 
-## TOEVOEGDE Requirements
+## ADDED Requirements
 
 ### Requirement: Health endpoint beschikbaarheid
 Het systeem SHALL een health check endpoint op `/health` bieden die de operationele status van backend en SQLite componenten teruggeeft.
@@ -105,29 +105,71 @@ Het systeem MUST HTTP 503 met Content-Type application/json teruggeven wanneer b
 
 **Note:** timestamp field MUST be dynamic RFC3339 UTC timestamp. All other fields are exact.
 
-### Requirement: Health endpoint backend fault injection test
-Het systeem SHALL test arrangement bieden om backend health check intern te verifiëren zonder externe API/account/service afhankelijkheid.
+### Requirement: Health endpoint test-only fault injection configuration
+Het systeem SHALL test-only fault injection configuratie bieden die EXACT alleen actief is wanneer `APP_ENV` exact de waarde `test` heeft EN `APP_HEALTH_FAULT` een waarde uit de whitelist is.
+
+#### Scenario: Fault injection alleen in test-omgeving
+- **Given** FastAPI applicatie start met `APP_ENV=test` en `APP_HEALTH_FAULT=sqlite`
+- **When** `/health` endpoint wordt aangevraagd
+- **Then** wordt de SQLite check deterministisch als ongezond gerapporteerd volgens het SQLite failure contract (HTTP 503)
+
+#### Scenario: Normaal gedrag buiten test-omgeving
+- **Given** FastAPI applicatie start zonder `APP_ENV`, of met `APP_ENV` anders dan exact `test` (bijvoorbeeld `dev`, `prod`, leeg)
+- **When** `/health` endpoint wordt aangevraagd met `APP_HEALTH_FAULT=sqlite`
+- **Then** wordt de fault genegeerd
+- **And** geldt het normale gezonde contract (HTTP 200)
+
+#### Scenario: Exacte whitelist van `APP_HEALTH_FAULT`
+- **Given** `APP_ENV=test` is gezet
+- **When** `APP_HEALTH_FAULT` wordt gelezen
+- **Then** is de whitelist exact: `sqlite`, `sqlite_timeout`, `backend`, `all`
+- **And** wordt elke andere waarde deterministisch genegeerd
+
+#### Scenario: Deterministisch gedrag bij onbekende waarden
+- **Given** `APP_ENV=test` is gezet en `APP_HEALTH_FAULT` bevat een niet-whitelisted waarde (bijvoorbeeld `random`, `sqlite_timeout;drop`, leeg of hoofdlettervariant)
+- **When** `/health` endpoint twee keer wordt aangevraagd met exact dezelfde input
+- **Then** retourneert elke aanvraag exact dezelfde normale gezonde respons (HTTP 200)
+- **And** wordt nooit een onbekende, niet-gedefinieerde of willekeurige foutrespons teruggegeven
+
+**Note:** Dit is een test-only configuratiemechanisme, geen externe API/account/service. De implementatie MUST geen bestands systeem mutaties aan de database uitvoeren; fault injection werkt uitsluitend met test doubles.
+
+### Requirement: Health endpoint test-only fault injection gedrag
+Het systeem SHALL test arrangement bieden om backend health check en SQLite health check intern te verifiëren zonder externe API/account/service afhankelijkheid.
 
 #### Scenario: Backend fault injection test
-- **Given** backend fault injection test wordt uitgevoerd
-- **When** backend fault injection test wordt uitgevoerd
-- **Then** kan backend health check intern veroorzaakt worden om te falen voor test (bijvoorbeeld via configuratievlag)
+- **Given** `APP_ENV=test` en `APP_HEALTH_FAULT=backend`
+- **When** `/health` endpoint wordt aangevraagd
+- **Then** wordt de backend self-check intern als ongezond gerapporteerd volgens het backend failure contract (HTTP 500)
 
-**Note:** This is a narrowly scoped test-only fault injection/configuration mechanism, not an external API/account/service. An unreachable API is a client connection failure outside `/health` contract.
+#### Scenario: Geen filesystem database mutatie
+- **Given** een fault (`sqlite`, `sqlite_timeout`, `backend`, `all`) actief is
+- **When** `/health` endpoint wordt aangevraagd
+- **Then** wordt GEEN database bestand aangemaakt, geschreven, hernoemd of verwijderd
+- **And** wordt de echte database onaangetast gelaten
 
-### Requirement: Health endpoint test-only fault injection configuration
-Het systeem SHALL test-only fault injection configuratie bieden die EXACT alleen actief is wanneer `APP_ENV=test` en `APP_HEALTH_FAULT` specifieke waarden toestaat.
+**Note:** Onbereikbare externe API's vallen buiten het `/health` contract en worden niet als fault injection mechanisme gebruikt.
 
-#### Scenario: Health endpoint test-only fault injection
-- **Given** FastAPI applicatie start met test configuratie
-- **When** health endpoint aanvraag wordt verwerkt met test environment
-- **Then** fault injection mechanism werkt EXCLUSIEF wanneer:
-  - `APP_ENV=test` environment variable is gezet
-  - `APP_HEALTH_FAULT` is een van: `sqlite`, `sqlite_timeout`, `backend`, `all`
-  - Alle andere `APP_HEALTH_FAULT` waarden worden genegeerd/rejected
-  - Normale health behavior blijft actief wanneer `APP_ENV` niet `test` is
+### Requirement: Health endpoint test isolatie en reset
+Het systeem SHALL elke health test uitvoeren op een via app-factory nieuw geconstrueerde applicatie-instance en elke test volledig resetten.
 
-**Note:** This is a test-only configuration mechanism, niet een externe API/account/service. Fault injection gebruikt een test double en veroorzaakt nooit filesystem mutation.
+#### Scenario: App-factory isolatie per test
+- **Given** health test wordt gestart
+- **When** test de applicatie-factory (bijvoorbeeld `create_app()`) aanroept met test-environment variabelen
+- **Then** wordt een nieuwe, onafhankelijke applicatie-instance gebouwd
+- **And** leest die instance `APP_ENV` en `APP_HEALTH_FAULT` bij constructie
+- **And** deelt geen module-globale state met eerdere tests
+
+#### Scenario: Proces- of instance-isolatie bij fault tests
+- **Given** meerdere fault tests achter elkaar draaien
+- **When** een test een fault instelt
+- **Then** bereikt die fault geen andere testinstance of de normale testserver
+
+#### Scenario: Reset cleanup
+- **Given** health test voltooid is
+- **When** test cleanup wordt uitgevoerd
+- **Then** worden `APP_ENV` en `APP_HEALTH_FAULT` verwijderd uit de testomgeving
+- **And** wordt de applicatie-instance weggegooid (niet hergebruikt)
+- **And** worden GEEN database bestanden gewijzigd
 
 ### Requirement: Health endpoint test assertions
 Het systeem SHALL test assertions bieden voor elke response: status, JSON fields/body, headers en timestamp format.
@@ -137,12 +179,12 @@ Het systeem SHALL test assertions bieden voor elke response: status, JSON fields
 - **When** response wordt geanalyseerd
 - **Then** wordt HTTP status code, Content-Type header, JSON body structure, timestamp format en component statusen gevalideerd
 
-**Note:** Test assertions zijn implementatie-neutraal maar actionable voor elke response type.
+**Note:** Test assertions zijn implementatie-neutraal maar actionable voor elk response type.
 
 ### Requirement: Health endpoint test scenarios
-Het systeem SHALL vier exacte named tests bieden met deterministische assertions en reset cleanup.
+Het systeem SHALL vijf exacte named tests bieden met deterministische assertions en reset cleanup.
 
-#### Scenario: Test 1 - Healthy system
+#### Scenario: Test 1 - `test_healthy_system`
 - **Given** FastAPI applicatie start met `APP_ENV=test` en geen `APP_HEALTH_FAULT`
 - **When** `/health` endpoint wordt aangevraagd
 - **Then** response moet:
@@ -162,7 +204,7 @@ Het systeem SHALL vier exacte named tests bieden met deterministische assertions
   - Timestamp format: RFC3339 UTC
   - Alle andere fields exact
 
-#### Scenario: Test 2 - SQLite failure
+#### Scenario: Test 2 - `test_sqlite_failure`
 - **Given** FastAPI applicatie start met `APP_ENV=test` en `APP_HEALTH_FAULT=sqlite`
 - **When** `/health` endpoint wordt aangevraagd
 - **Then** response moet:
@@ -183,7 +225,32 @@ Het systeem SHALL vier exacte named tests bieden met deterministische assertions
   - Timestamp format: RFC3339 UTC
   - Alle andere fields exact
 
-#### Scenario: Test 3 - Backend failure
+#### Scenario: Test 3 - `test_sqlite_timeout`
+- **Given** FastAPI applicatie start met `APP_ENV=test` en `APP_HEALTH_FAULT=sqlite_timeout`
+- **When** `/health` endpoint wordt aangevraagd
+- **Then** response moet:
+  - HTTP status: 503
+  - Content-Type: application/json
+  - JSON body:
+    ```json
+    {
+      "status": "unhealthy",
+      "timestamp": "<RFC3339_UTC_TIMESTAMP>",
+      "components": {
+        "backend": "healthy",
+        "sqlite": "unhealthy"
+      },
+      "error": "SQLite database not accessible"
+    }
+    ```
+  - Timestamp format: RFC3339 UTC
+  - Server-side probe budget: de SQLite probe MUST worden afgekapt binnen <=500ms
+  - Client-side assertion budget: totale response MUST voltooid zijn binnen <=1000ms
+  - Alle andere fields exact
+
+**Note:** De timeout fault gebruikt een test double en voert GEEN filesystem database mutatie uit. Hetzelfde SQLite failure contract geldt; de test onderscheidt zich door de expliciete 500ms/1000ms budget assertions.
+
+#### Scenario: Test 4 - `test_backend_failure`
 - **Given** FastAPI applicatie start met `APP_ENV=test` en `APP_HEALTH_FAULT=backend`
 - **When** `/health` endpoint wordt aangevraagd
 - **Then** response moet:
@@ -204,7 +271,7 @@ Het systeem SHALL vier exacte named tests bieden met deterministische assertions
   - Timestamp format: RFC3339 UTC
   - Alle andere fields exact
 
-#### Scenario: Test 4 - Combined failure
+#### Scenario: Test 5 - `test_combined_failure`
 - **Given** FastAPI applicatie start met `APP_ENV=test` en `APP_HEALTH_FAULT=all`
 - **When** `/health` endpoint wordt aangevraagd
 - **Then** response moet:
@@ -226,11 +293,12 @@ Het systeem SHALL vier exacte named tests bieden met deterministische assertions
   - Alle andere fields exact
 
 #### Scenario: Test cleanup
-- **Given** health endpoint test voltooid is
+- **Given** health test voltooid is
 - **When** test cleanup wordt uitgevoerd
-- **Then** wordt test environment gereset:
+- **Then** wordt de testomgeving gereset:
   - `APP_ENV` en `APP_HEALTH_FAULT` environment variables worden verwijderd
-  - SQLite database wordt hersteld naar normale health check status
-  - Backend health check wordt gereset naar normale status
+  - De applicatie-instance wordt weggegooid (app-factory isolatie)
+  - Er zijn GEEN filesystem database mutaties uitgevoerd
+  - De volgende test start met een schone, normale health check status
 
-**Note:** Alle tests gebruiken test doubles en veroorzaken nooit filesystem mutation. `sqlite_timeout` server probe budget is <=500ms; client assertion budget is <=1000ms, voorkomende race condition.
+**Note:** Alle tests gebruiken test doubles en veroorzaken nooit filesystem database mutatie. `sqlite_timeout` server probe budget is <=500ms; client assertion budget is <=1000ms, waardoor race conditions vermeden worden.

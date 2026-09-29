@@ -5,28 +5,31 @@ context: |
   All artifacts must be written in Dutch.
   Keep OpenSpec structural headings and SHALL/MUST keywords in English.
 
-
-schema: spec-driven
-  context: |
-    Product: lokale, mobiele persoonlijke nieuwswebsite voor één gebruiker.
-    Stack: Next.js PWA frontend, FastAPI backend, SQLite, Docker Compose.
-    Toegang: alleen LAN; later optioneel Tailscale. Geen publieke hosting.
-    Onderwerpen: AI, AI-tools/trends, Kubernetes, Linux, T Cloud Public,
-    Open Telekom Cloud, Europese digitale soevereiniteit, Azure, AWS,
-    Oekraïne, Iran/Midden-Oosten, geopolitiek en Ethereum.
-    Bronnen: RSS en officiële publicaties eerst. Elke samenvatting bevat bronlink en datum.
-    Taal: Nederlands voor UI, documentatie en samenvattingen; code en identifiers Engels.
-    Kwaliteit: mobiel vanaf 360 px, tests voor backend, geen duplicaten bij herhaalde imports.
-  rules:
-    proposal:
-      - Benoem doel, scope, niet-doelen, risico's, privacy-impact en rollback.
-      - Maak geen externe accounts, betaalde API's of publieke hosting zonder expliciete toestemming.
-    specs:
-      - Schrijf requirements met Given/When/Then-scenario's.
-      - Leg bronattributie, deduplicatie en lokale toegang expliciet vast.
-    design:
-      - Leg datamodel, API-contracten, foutafhandeling en teststrategie vast.
-      - Houd frontend, backend en ingestie als afzonderlijke modules.
-    tasks:
-      - Maak kleine, uitvoerbare en testbare taken.
-      - Voeg per taak een verificatiestap toe.
+  Product: lokale, mobiele persoonlijke nieuwswebsite voor één gebruiker.
+  Stack: Next.js PWA frontend, FastAPI backend, SQLite, Docker Compose.
+  Toegang: alleen LAN; later optioneel Tailscale. Geen publieke hosting.
+  Onderwerpen: AI, AI-tools/trends, Kubernetes, Linux, T Cloud Public,
+  Open Telekom Cloud, Europese digitale soevereiniteit, Azure, AWS,
+  Oekraïne, Iran/Midden-Oosten, geopolitiek en Ethereum.
+  Bronnen: RSS en officiële publicaties eerst. Elke samenvatting bevat bronlink en datum.
+  Taal: Nederlands voor UI, documentatie en samenvattingen; code en identifiers Engels.
+  Kwaliteit: mobiel vanaf 360 px, tests voor backend, geen duplicaten bij herhaalde imports.
+rules:
+  proposal:
+    - Benoem doel, scope, niet-doelen, risico's, privacy-impact en rollback.
+    - Houd iedere change zelfstandig begrijpelijk, testbaar, releasable en terugdraaibaar.
+    - Open toekomstige roadmapchanges pas just-in-time nadat de voorganger is geaccepteerd.
+    - Maak geen externe accounts, betaalde API's of publieke hosting zonder expliciete toestemming.
+  specs:
+    - Schrijf requirements met Given/When/Then-scenario's.
+    - Beschrijf observeerbaar gedrag en belangrijke garanties; plaats geen complete implementatiescripts in specs.
+    - Leg bronattributie, deduplicatie en lokale toegang expliciet vast wanneer die capability ze raakt.
+    - Neem normale, negatieve en grensscenario's op, inclusief lege data en herhaalde uitvoering waar relevant.
+  design:
+    - Leg datamodel, API-contracten, foutafhandeling, teststrategie en rollback proportioneel vast.
+    - Houd frontend, backend en ingestie als afzonderlijke modules.
+    - Verklaar externe netwerktoegang, datastromen, kosten en LLM/providerkeuzes expliciet.
+  tasks:
+    - Maak kleine, uitvoerbare en testbare taken zonder dubbele verificatiechecklists.
+    - Voeg per taak een concrete verificatiestap toe en vink pas af na echte uitvoering.
+    - Voeg menselijke acceptatie, OpenSpec-validatie en archive als afzonderlijke afsluitstappen toe.

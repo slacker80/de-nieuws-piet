@@ -1,0 +1,18 @@
+# Ontwikkelingsopstelling (taak 2.2) — expliciet laden:
+#
+#   docker compose -f compose.yaml -f compose.dev.yaml up -d --build
+#
+# Niet auto-geladen (bewust géén `compose.override.yaml`), zodat de
+# acceptatie `docker compose up -d --build` altijd de productieopstelling is.
+
+services:
+  frontend:
+    build:
+      # Dependencies-stage (npm ci uit package-lock.json); de bron komt
+      # via de bind mount hieronder de container in.
+      target: deps
+    command: ["npm", "run", "dev", "--", "-H", "0.0.0.0"]
+    volumes:
+      - ./frontend:/app
+      # Container-lockfile-afhankelijkheden blijven leidend (niet de host-map).
+      - /app/node_modules
