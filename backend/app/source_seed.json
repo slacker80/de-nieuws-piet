@@ -1,0 +1,230 @@
+{
+  "capability": "source-catalog",
+  "reviewed_on": "2026-09-29",
+  "review_criteria": "Uitsluitend officiële publicatiekanalen van organisaties uit de bronstrategie van README.md. Elke feed-URL is vóór opname handmatig geopend en als RSS- of Atom-feed herkend; de opname is alleen offline gevalideerd. Geen aggregators, geen gelinkte landingspagina's en geen URL zonder die beoordeling.",
+  "sources": [
+    {
+      "name": "Kubernetes Blog",
+      "feed_url": "https://kubernetes.io/feed.xml",
+      "website_url": "https://kubernetes.io/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 5,
+      "is_active": true,
+      "topics": [
+        "kubernetes"
+      ],
+      "cloud_labels": [],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "CNCF Blog",
+      "feed_url": "https://www.cncf.io/feed/",
+      "website_url": "https://www.cncf.io/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 5,
+      "is_active": true,
+      "topics": [
+        "kubernetes"
+      ],
+      "cloud_labels": [],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "Linux Foundation Blog",
+      "feed_url": "https://www.linuxfoundation.org/blog/rss.xml",
+      "website_url": "https://www.linuxfoundation.org/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 5,
+      "is_active": true,
+      "topics": [
+        "linux"
+      ],
+      "cloud_labels": [],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "Ubuntu Blog",
+      "feed_url": "https://ubuntu.com/blog/feed",
+      "website_url": "https://ubuntu.com/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 5,
+      "is_active": true,
+      "topics": [
+        "linux"
+      ],
+      "cloud_labels": [],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "AWS What's New",
+      "feed_url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/",
+      "website_url": "https://aws.amazon.com/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 5,
+      "is_active": true,
+      "topics": [
+        "aws"
+      ],
+      "cloud_labels": [
+        "aws"
+      ],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "AWS News Blog",
+      "feed_url": "https://aws.amazon.com/blogs/aws/feed/",
+      "website_url": "https://aws.amazon.com/blogs/aws/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 5,
+      "is_active": true,
+      "topics": [
+        "aws"
+      ],
+      "cloud_labels": [
+        "aws"
+      ],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "Microsoft Azure Blog",
+      "feed_url": "https://azure.microsoft.com/en-us/blog/feed/",
+      "website_url": "https://azure.microsoft.com/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 5,
+      "is_active": true,
+      "topics": [
+        "azure"
+      ],
+      "cloud_labels": [
+        "azure"
+      ],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "T Cloud Public Blog",
+      "feed_url": "https://www.t-cloud-public.com/en/blog.rss.xml",
+      "website_url": "https://www.t-cloud-public.com/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 5,
+      "is_active": true,
+      "topics": [
+        "t-cloud-public",
+        "open-telekom-cloud",
+        "digital-sovereignty"
+      ],
+      "cloud_labels": [
+        "t-cloud"
+      ],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "Ethereum Foundation Blog",
+      "feed_url": "https://blog.ethereum.org/feed.xml",
+      "website_url": "https://blog.ethereum.org/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 5,
+      "is_active": true,
+      "topics": [
+        "ethereum"
+      ],
+      "cloud_labels": [],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "BBC News",
+      "feed_url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "website_url": "https://www.bbc.co.uk/news/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 4,
+      "is_active": true,
+      "topics": [
+        "geopolitics"
+      ],
+      "cloud_labels": [],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "Al Jazeera",
+      "feed_url": "https://www.aljazeera.com/xml/rss/all.xml",
+      "website_url": "https://www.aljazeera.com/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 4,
+      "is_active": true,
+      "topics": [
+        "middle-east",
+        "geopolitics"
+      ],
+      "cloud_labels": [],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "Google AI Blog",
+      "feed_url": "https://blog.google/technology/ai/rss/",
+      "website_url": "https://blog.google/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 5,
+      "is_active": true,
+      "topics": [
+        "ai"
+      ],
+      "cloud_labels": [],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "OpenAI News",
+      "feed_url": "https://openai.com/news/rss.xml",
+      "website_url": "https://openai.com/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 5,
+      "is_active": true,
+      "topics": [
+        "ai",
+        "ai-tools"
+      ],
+      "cloud_labels": [],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "European Commission Digital Strategy",
+      "feed_url": "https://digital-strategy.ec.europa.eu/en/rss.xml",
+      "website_url": "https://digital-strategy.ec.europa.eu/",
+      "type": "rss",
+      "language": "en",
+      "reliability": 5,
+      "is_active": true,
+      "topics": [
+        "digital-sovereignty",
+        "ai"
+      ],
+      "cloud_labels": [],
+      "reviewed": "2026-09-29"
+    },
+    {
+      "name": "KDE Planet",
+      "feed_url": "https://planet.kde.org/atom.xml",
+      "website_url": "https://planet.kde.org/",
+      "type": "atom",
+      "language": "en",
+      "reliability": 4,
+      "is_active": true,
+      "topics": [
+        "linux"
+      ],
+      "cloud_labels": [],
+      "reviewed": "2026-09-29"
+    }
+  ]
+}
