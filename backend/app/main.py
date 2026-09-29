@@ -16,7 +16,9 @@ from contextlib import asynccontextmanager
 
 from .config import read_fault_config
 from .db import init_database
+from .db_migrate import migrate
 from .health import HealthService
+from .sources_api import router as sources_router
 
 # Standaard databasepad in de backend-container (named volume, taak 2.4).
 DEFAULT_DB_PATH = "/app/data/news.db"
@@ -53,14 +55,19 @@ def create_app(
     async def lifespan(application: FastAPI):
         # Taak 5.1: SQLite database initialiseren wanneer de applicatie start.
         # Idempotent; `init_db=False` (tests) slaat dit expliciet over.
+        # Daarna de catalogusmigratie v1 -> v2 (delta-spec `source-catalog`):
+        # eveneens idempotent, versie 2 is een noop, en nooit de seed (die is
+        # een expliciete, handmatige operatie los van de applicatie-start).
         if init_db:
             application.state.db_path = init_database(resolved_db_path)
+            migrate(application.state.db_path)
         yield
 
     app = FastAPI(title="Nieuws Piet backend", version="0.1.0", lifespan=lifespan)
     app.state.health = health
     app.state.health_fault = fault_cfg.fault
     app.state.db_path = resolved_db_path
+    app.include_router(sources_router)
 
     @app.get("/health")
     def health_endpoint() -> JSONResponse:

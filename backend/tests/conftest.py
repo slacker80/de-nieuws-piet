@@ -8,11 +8,14 @@
 from __future__ import annotations
 
 import os
+import socket
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.config import read_fault_config
+from app.db import init_database
+from app.db_migrate import migrate
 from app.main import create_app
 from tests import runtime_env
 
@@ -119,6 +122,84 @@ def build_client(
         init_db=init_db,
     )
     return TestClient(application)
+
+
+@pytest.fixture
+def socket_guard(monkeypatch):
+    """Blokkeert élke verbinding of DNS-resolutie naar een externe host.
+
+    De catalogussuite is volledig offline (delta-spec `source-catalog`,
+    taak 7.2): lokale sockets (AF_UNIX) en loopback blijven toegestaan omdat
+    sommige testhulpmiddelen die gebruiken; extern contact is een directe
+    mislukking van de test.
+    """
+    echte_connect = socket.socket.connect
+    echte_connect_ex = socket.socket.connect_ex
+    echte_getaddrinfo = socket.getaddrinfo
+    echte_create_connection = socket.create_connection
+
+    def _lokale_adressen(adres) -> bool:
+        if isinstance(adres, (str, bytes)):
+            return True  # AF_UNIX-pad: lokale socket, geen netwerkcontact
+        host = adres[0] if isinstance(adres, (tuple, list)) else adres
+        return host in ("127.0.0.1", "::1", "localhost", "", None)
+
+    def connect(self, address, *args, **kwargs):
+        assert _lokale_adressen(address), (
+            f"socket-guard: verboden verbinding naar extern adres {address!r}"
+        )
+        return echte_connect(self, address, *args, **kwargs)
+
+    def connect_ex(self, address, *args, **kwargs):
+        assert _lokale_adressen(address), (
+            f"socket-guard: verboden verbinding naar extern adres {address!r}"
+        )
+        return echte_connect_ex(self, address, *args, **kwargs)
+
+    def getaddrinfo(host, *args, **kwargs):
+        assert host in ("127.0.0.1", "::1", "localhost", "", None), (
+            f"socket-guard: verbode DNS-resolutie van {host!r}"
+        )
+        return echte_getaddrinfo(host, *args, **kwargs)
+
+    def create_connection(address, *args, **kwargs):
+        assert _lokale_adressen(address), (
+            f"socket-guard: verboden verbinding naar extern adres {address!r}"
+        )
+        return echte_create_connection(address, *args, **kwargs)
+
+    monkeypatch.setattr(socket.socket, "connect", connect)
+    monkeypatch.setattr(socket.socket, "connect_ex", connect_ex)
+    monkeypatch.setattr(socket, "getaddrinfo", getaddrinfo)
+    monkeypatch.setattr(socket, "create_connection", create_connection)
+    yield
+
+
+@pytest.fixture
+def catalogus_db(tmp_path) -> str:
+    """Tijdelijke database op schema-versie 2 met de woordenlijst gevuld."""
+    db_file = tmp_path / "news.db"
+    init_database(str(db_file))
+    assert migrate(str(db_file)) == "migrated"
+    return str(db_file)
+
+
+@pytest.fixture
+def catalogus_client(catalogus_db) -> TestClient:
+    """Beheer-CLI tegen een verse, geïsoleerde catalogusdatabase."""
+    return build_client(db_path=catalogus_db, init_db=False)
+
+
+def minimale_payload(**wijzigingen) -> dict:
+    """Geldig minimale POST-payload voor de catalogustests."""
+    payload = {
+        "name": "Voorbeeld Feed",
+        "feed_url": "https://example.com/feed.xml",
+        "type": "rss",
+        "language": "nl",
+    }
+    payload.update(wijzigingen)
+    return payload
 
 
 def assert_timestamp_rfc3339_utc(value: str) -> None:

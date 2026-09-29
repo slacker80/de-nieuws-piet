@@ -20,6 +20,14 @@ from collections import defaultdict
 import pytest
 from pathlib import Path
 
+from tests import runtime_env
+
+# De bootstrap-change is na afronding gearchiveerd; de statische controles hier
+# lezen de artefacten uit de actieve map, of uit het archief wanneer die is
+# verplaatst.
+ROOT = runtime_env.ROOT
+CHANGE = runtime_env.bootstrap_change_dir()
+
 # Geen Docker-detectie nodig: deze tests verifiëren statisch spec-, design-,
 # tasks- en documentatie-inhoud. Runtime-Docker-tests staan in
 # tests/test_integration.py en tests/test_rollback_runtime.py (CLI-detectie).
@@ -139,7 +147,7 @@ def _assert_restore_ligt_na_down_v(content: str) -> None:
 def test_10_1_1_verify_db_rollback_named_volume_spec() -> None:
     """10.1.1 Verifieer DB rollback named volume `nieuws_piet_sqlite_data` (exacte volume identiteit) in spec."""
     # Concrete volume-identiteit: exacte naam, expliciete `name:`-declaraties en geen Compose-projectprefix
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/database/local-sqlite/spec.md")
+    spec_path = CHANGE / "specs/database/local-sqlite/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "nieuws_piet_sqlite_data" in content
@@ -153,7 +161,7 @@ def test_10_1_1_verify_db_rollback_named_volume_spec() -> None:
 def test_10_1_2_verify_backend_mount_and_db_file_spec() -> None:
     """10.1.2 Verifieer backend mount `/app/data` and database file `/app/data/news.db` in spec."""
     # Concrete pad-contracten: backend mount en database file moeten exact vastliggen
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/database/local-sqlite/spec.md")
+    spec_path = CHANGE / "specs/database/local-sqlite/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert re.search(r"(?i)backend\s+mount\**\s*:\s*`?/app/data`?", content)
@@ -165,7 +173,7 @@ def test_10_1_2_verify_backend_mount_and_db_file_spec() -> None:
 def test_10_1_3_verify_host_backup_outside_named_volume_spec() -> None:
     """10.1.3 Verifieer host backup `./backups/news.db.<UTC timestamp>.bak` outside named volume in spec."""
     # Concrete backup-contract: exact pad, host-backup begrip en ligging buiten het named volume
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/database/local-sqlite/spec.md")
+    spec_path = CHANGE / "specs/database/local-sqlite/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "./backups/news.db.<UTC timestamp>.bak" in content
@@ -179,7 +187,7 @@ def test_10_1_3_verify_host_backup_outside_named_volume_spec() -> None:
 def test_10_1_4_verify_exact_shell_command_sequence_spec() -> None:
     """10.1.4 Verifieer exact shell command sequence met `docker compose`/`docker` en standaard shell (geen `docker-compose` v1) in spec."""
     # Concrete shell-sequence: vaste start, exacte commando's, read-only bron, geen v1-aanroep
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/database/local-sqlite/spec.md")
+    spec_path = CHANGE / "specs/database/local-sqlite/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "set -euo pipefail" in content
@@ -194,7 +202,7 @@ def test_10_1_4_verify_exact_shell_command_sequence_spec() -> None:
 def test_10_1_5_verify_backup_integrity_non_destructive_down_spec() -> None:
     """10.1.5 Verifieer backup-integriteitsvalidatie, non-destructive `docker compose down` en feitelijk restore in spec."""
     # Concrete invarianten: integriteitsvalidatie stopt de procedure, down blijft niet-destructief, restore is feitelijk
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/database/local-sqlite/spec.md")
+    spec_path = CHANGE / "specs/database/local-sqlite/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "PRAGMA integrity_check" in content
@@ -209,7 +217,7 @@ def test_10_1_5_verify_backup_integrity_non_destructive_down_spec() -> None:
 def test_10_1_6_verify_docker_compose_down_v_opt_in_only_spec() -> None:
     """10.1.6 Verifieer `docker compose down -v` uitsluitend als opt-in in spec, met volgorde backup → validatie → `down -v` → restore → verificatie (geen restore vóór `down -v`)."""
     # Concrete invarianten: opt-in-only, vaste volgorde en expliciet verbod op restore vóór `down -v`
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/database/local-sqlite/spec.md")
+    spec_path = CHANGE / "specs/database/local-sqlite/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "docker compose down -v" in content
@@ -227,7 +235,7 @@ def test_10_1_6_verify_docker_compose_down_v_opt_in_only_spec() -> None:
 def test_10_2_1_verify_health_test_only_exact_config_spec() -> None:
     """10.2.1 Verifieer health test-only exact config: ONLY when `APP_ENV=test` in spec."""
     # Concrete invariant: fault-injectie is uitsluitend actief bij exacte `APP_ENV=test`-waarde
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/health-monitoring/health-endpoint/spec.md")
+    spec_path = CHANGE / "specs/health-monitoring/health-endpoint/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "test-only" in content
@@ -242,7 +250,7 @@ def test_10_2_1_verify_health_test_only_exact_config_spec() -> None:
 def test_10_2_2_verify_app_health_fault_whitelist_spec() -> None:
     """10.2.2 Verifieer `APP_HEALTH_FAULT` whitelist `sqlite`, `sqlite_timeout`, `backend`, `all` in spec."""
     # Controleer dat de spec `APP_HEALTH_FAULT` whitelist `sqlite`, `sqlite_timeout`, `backend`, `all` beschrijft
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/health-monitoring/health-endpoint/spec.md")
+    spec_path = CHANGE / "specs/health-monitoring/health-endpoint/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "APP_HEALTH_FAULT" in content
@@ -258,7 +266,7 @@ def test_10_2_2_verify_app_health_fault_whitelist_spec() -> None:
 def test_10_2_3_verify_five_exact_named_tests_spec() -> None:
     """10.2.3 Verifieer vijf exacte named tests met exacte assertions inclusief `test_sqlite_timeout` in spec."""
     # Controleer dat de spec vijf exacte named tests met exacte assertions inclusief `test_sqlite_timeout` beschrijft
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/health-monitoring/health-endpoint/spec.md")
+    spec_path = CHANGE / "specs/health-monitoring/health-endpoint/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "test_healthy_system" in content
@@ -273,7 +281,7 @@ def test_10_2_3_verify_five_exact_named_tests_spec() -> None:
 def test_10_2_4_verify_sqlite_timeout_server_probe_budget_spec() -> None:
     """10.2.4 Verifieer `sqlite_timeout` server probe budget <=500ms in spec."""
     # Controleer dat de spec `sqlite_timeout` server probe budget <=500ms in spec beschrijft
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/health-monitoring/health-endpoint/spec.md")
+    spec_path = CHANGE / "specs/health-monitoring/health-endpoint/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "sqlite_timeout" in content
@@ -286,7 +294,7 @@ def test_10_2_4_verify_sqlite_timeout_server_probe_budget_spec() -> None:
 def test_10_2_5_verify_client_assertion_budget_spec() -> None:
     """10.2.5 Verifieer client assertion budget <=1000ms in spec."""
     # Controleer dat de spec client assertion budget <=1000ms in spec beschrijft
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/health-monitoring/health-endpoint/spec.md")
+    spec_path = CHANGE / "specs/health-monitoring/health-endpoint/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "client assertion budget" in content
@@ -298,7 +306,7 @@ def test_10_2_5_verify_client_assertion_budget_spec() -> None:
 def test_10_2_6_verify_app_factory_isolatie_spec() -> None:
     """10.2.6 Verifieer app-factory/proces-isolatie, reset cleanup en geen filesystem database mutaties in spec."""
     # Controleer dat de spec app-factory isolatie, reset cleanup en geen filesystem database mutaties beschrijft
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/health-monitoring/health-endpoint/spec.md")
+    spec_path = CHANGE / "specs/health-monitoring/health-endpoint/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "app-factory" in content
@@ -315,7 +323,7 @@ def test_10_2_6_verify_app_factory_isolatie_spec() -> None:
 def test_10_3_1_verify_exact_command_docker_compose_up_d_build_spec() -> None:
     """10.3.1 Verifieer exact command: `docker compose up -d --build` in spec."""
     # Controleer dat de spec exact command: `docker compose up -d --build` in spec beschrijft
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/local-development/setup/spec.md")
+    spec_path = CHANGE / "specs/local-development/setup/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "docker compose up -d --build" in content
@@ -326,7 +334,7 @@ def test_10_3_1_verify_exact_command_docker_compose_up_d_build_spec() -> None:
 def test_10_3_2_verify_only_frontend_and_backend_services_spec() -> None:
     """10.3.2 Verifieer only `frontend` and `backend` services in spec."""
     # Controleer dat de spec only `frontend` and `backend` services in spec beschrijft
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/local-development/setup/spec.md")
+    spec_path = CHANGE / "specs/local-development/setup/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "frontend" in content
@@ -339,7 +347,7 @@ def test_10_3_2_verify_only_frontend_and_backend_services_spec() -> None:
 def test_10_3_3_verify_copyable_shell_loop_frontend_spec() -> None:
     """10.3.3 Verifieer copyable shell loop met exacte HTTP status én body assertions voor frontend in spec."""
     # Controleer dat de spec copyable shell loop met exacte HTTP status én body assertions voor frontend in spec beschrijft
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/local-development/setup/spec.md")
+    spec_path = CHANGE / "specs/local-development/setup/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "shell loop" in content
@@ -353,7 +361,7 @@ def test_10_3_3_verify_copyable_shell_loop_frontend_spec() -> None:
 def test_10_3_4_verify_max_30_attempts_sleep_1_curl_max_time_5_spec() -> None:
     """10.3.4 Verifieer max 30 attempts, sleep 1, curl `--max-time 5` in spec."""
     # Concrete budget-waarden: readiness loop legt 30/1/5 exact vast in variabelen én samenvatting
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/local-development/setup/spec.md")
+    spec_path = CHANGE / "specs/local-development/setup/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "MAX_ATTEMPTS=30" in content
@@ -367,7 +375,7 @@ def test_10_3_4_verify_max_30_attempts_sleep_1_curl_max_time_5_spec() -> None:
 def test_10_3_5_verify_sqlite_never_a_service_spec() -> None:
     """10.3.5 Verifieer SQLite never a service in spec."""
     # Concrete invariant: SQLite is backend-volume mounted, nooit een eigen service
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/local-development/setup/spec.md")
+    spec_path = CHANGE / "specs/local-development/setup/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "nooit een service" in content
@@ -381,7 +389,7 @@ def test_10_3_5_verify_sqlite_never_a_service_spec() -> None:
 def test_10_3_6_verify_frontend_smoke_never_health_spec() -> None:
     """10.3.6 Verifieer frontend smoke op `http://localhost:3000/` en NOOIT `/health` in spec."""
     # Concrete invariant: frontend smoke gebruikt uitsluitend de frontend URL; `/health` is backend-only
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/local-development/setup/spec.md")
+    spec_path = CHANGE / "specs/local-development/setup/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert re.search(r"(?i)frontend (externe )?smoke", content)
@@ -399,7 +407,7 @@ def test_10_3_6_verify_frontend_smoke_never_health_spec() -> None:
 def test_10_4_1_verify_local_dev_dependency_playwright_test_spec() -> None:
     """10.4.1 Verifieer mobile exact: local dev dependency `@playwright/test` version pinned in project lockfile in spec."""
     # Controleer dat de spec mobile exact: local dev dependency `@playwright/test` version pinned in project lockfile in spec beschrijft
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/documentation/local-dev/spec.md")
+    spec_path = CHANGE / "specs/documentation/local-dev/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "@playwright/test" in content
@@ -412,7 +420,7 @@ def test_10_4_1_verify_local_dev_dependency_playwright_test_spec() -> None:
 def test_10_4_2_verify_command_npm_run_test_e2e_spec() -> None:
     """10.4.2 Verifieer command `npm run test:e2e` na geslaagde readiness loop in spec."""
     # Controleer dat de spec command `npm run test:e2e` na geslaagde readiness loop in spec beschrijft
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/documentation/local-dev/spec.md")
+    spec_path = CHANGE / "specs/documentation/local-dev/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "npm run test:e2e" in content
@@ -424,7 +432,7 @@ def test_10_4_2_verify_command_npm_run_test_e2e_spec() -> None:
 def test_10_4_3_verify_test_http_localhost_3000_viewport_360x800_vóór_navigatie_spec() -> None:
     """10.4.3 Verifieer test `http://localhost:3000/`, viewport 360x800 vóór navigatie in spec."""
     # Controleer dat de spec test `http://localhost:3000/`, viewport 360x800 vóór navigatie in spec beschrijft
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/documentation/local-dev/spec.md")
+    spec_path = CHANGE / "specs/documentation/local-dev/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "http://localhost:3000/" in content
@@ -437,7 +445,7 @@ def test_10_4_3_verify_test_http_localhost_3000_viewport_360x800_vóór_navigati
 def test_10_4_4_verify_assert_marker_text_nieuws_piet_spec() -> None:
     """10.4.4 Verifieer assert marker text `Nieuws Piet`, visible nav landmark, visible main landmark in spec."""
     # Concrete assertions: marker-tekst plus beide zichtbare landmarks staan exact voorgeschreven
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/documentation/local-dev/spec.md")
+    spec_path = CHANGE / "specs/documentation/local-dev/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "marker `Nieuws Piet`" in content
@@ -452,7 +460,7 @@ def test_10_4_4_verify_assert_marker_text_nieuws_piet_spec() -> None:
 def test_10_4_5_verify_text_nog_geen_nieuws_beschikbaar_spec() -> None:
     """10.4.5 Verifieer text `Nog geen nieuws beschikbaar`, and `scrollWidth <= clientWidth` in spec."""
     # Concrete assertions: lege-tekst en horizontale-scroll-contract
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/documentation/local-dev/spec.md")
+    spec_path = CHANGE / "specs/documentation/local-dev/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "tekst `Nog geen nieuws beschikbaar`" in content
@@ -466,7 +474,7 @@ def test_10_4_5_verify_text_nog_geen_nieuws_beschikbaar_spec() -> None:
 def test_10_4_6_verify_explicitly_ban_accounts_api_keys_spec() -> None:
     """10.4.6 Verifieer explicitly ban accounts/API keys/SaaS/browser cloud/paid services/external APIs in spec."""
     # Concrete contractwaarden: de vier verboden categorieën gelden expliciet voor alle tests
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/documentation/local-dev/spec.md")
+    spec_path = CHANGE / "specs/documentation/local-dev/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         for verboden in (
@@ -486,7 +494,7 @@ def test_10_4_6_verify_explicitly_ban_accounts_api_keys_spec() -> None:
 def test_10_4_7_verify_rollback_failure_playwright_documentatie_spec() -> None:
     """10.4.7 Verifieer rollback-, failure testing- en Playwright documentatie bevatten de exacte commando's en budgetten in spec."""
     # Controleer dat de spec rollback-, failure testing- en Playwright documentatie bevatten de exacte commando's en budgetten in spec beschrijft
-    spec_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs/documentation/local-dev/spec.md")
+    spec_path = CHANGE / "specs/documentation/local-dev/spec.md"
     if spec_path.exists():
         content = spec_path.read_text()
         assert "rollback" in content
@@ -504,7 +512,7 @@ def test_10_4_7_verify_rollback_failure_playwright_documentatie_spec() -> None:
 def test_10_5_1_verify_design_decisions_reflect_new_requirements() -> None:
     """10.5.1 Verifieer design decisions reflect new requirements in design.md."""
     # Concrete design-beslissingen: sectie Beslissingen bevat per nieuw requirement een benoemde beslissing
-    design_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/design.md")
+    design_path = CHANGE / "design.md"
     if design_path.exists():
         content = design_path.read_text()
         assert "## Beslissingen" in content
@@ -533,7 +541,7 @@ def test_10_5_1_verify_design_decisions_reflect_new_requirements() -> None:
 def test_10_5_2_verify_architecture_decisions_align_with_exact_specifications() -> None:
     """10.5.2 Verifieer architecture decisions align with exact specifications in design.md."""
     # Architectuurbeslissingen moeten de exacte spec-contracten overnemen (paden, volume, URLs)
-    design_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/design.md")
+    design_path = CHANGE / "design.md"
     if design_path.exists():
         content = design_path.read_text()
         assert "### Architectuur Beslissing" in content
@@ -555,7 +563,7 @@ def test_10_5_2_verify_architecture_decisions_align_with_exact_specifications() 
 def test_10_5_3_verify_technology_stack_decisions_support_all_requirements() -> None:
     """10.5.3 Verifieer technology stack decisions support all requirements in design.md."""
     # De volledige stack (frontend, backend, database, e2e) moet expliciet gekozen en aanspreekbaar zijn
-    design_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/design.md")
+    design_path = CHANGE / "design.md"
     if design_path.exists():
         content = design_path.read_text()
         assert "### Technology Stack Beslissing" in content
@@ -572,7 +580,7 @@ def test_10_5_3_verify_technology_stack_decisions_support_all_requirements() -> 
 def test_10_5_4_verify_risk_mitigation_strategies_address_new_requirements() -> None:
     """10.5.4 Verifieer risk mitigation strategies address new requirements in design.md."""
     # Risicosectie: benoemde risico's met mitigatie die de nieuwe requirements concreet afdekken
-    design_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/design.md")
+    design_path = CHANGE / "design.md"
     if design_path.exists():
         content = design_path.read_text()
         assert "## Risico's / Trade-offs" in content
@@ -602,7 +610,7 @@ def test_10_5_4_verify_risk_mitigation_strategies_address_new_requirements() -> 
 def test_10_5_5_verify_migration_plan_uses_docker_compose_up_d_build() -> None:
     """10.5.5 Verifieer migration plan uses `docker compose up -d --build` en bevat geen verouderde `docker-compose` commando's in design.md."""
     # Migratieplan gebruikt exact de v2-opdracht en noemt nergens een v1-aanroep
-    design_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/design.md")
+    design_path = CHANGE / "design.md"
     if design_path.exists():
         content = design_path.read_text()
         migratie = content.split("## Migratie Plan", 1)[1]
@@ -624,7 +632,7 @@ def test_10_6_1_verify_discrete_verified_tasks_for_each_acceptance() -> None:
     # Checkbox/task-ID-structuur: elke checkbox draagt een unieke, geldig geschematiseerde
     # task-ID; secties en parents bestaan; nummering is 1..n; aggregaat-taken declareren
     # exact hun aantal kinderen.
-    tasks_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/tasks.md")
+    tasks_path = CHANGE / "tasks.md"
     if tasks_path.exists():
         content = tasks_path.read_text()
         regels = _checkbox_regels(content)
@@ -682,8 +690,8 @@ def test_10_6_2_verify_use_dutch_prose_but_exact_SHALL_MUST() -> None:
     # Taken zijn Nederlands geformuleerd; de exacte requirement-taal (SHALL/MUST,
     # Given/When/Then, Requirement/Scenario) hoort in de vier delta specs, niet als
     # Engelse metaterm in het Nederlandse takenbestand.
-    tasks_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/tasks.md")
-    specs_dir = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/specs")
+    tasks_path = CHANGE / "tasks.md"
+    specs_dir = CHANGE / "specs"
     if not (tasks_path.exists() and specs_dir.exists()):
         pytest.skip("tasks.md of specs niet gevonden")
 
@@ -716,7 +724,7 @@ def test_10_6_3_verify_ensure_no_duplicate_timeout_rollback() -> None:
     """10.6.3 Verifieer ensure no duplicate timeout/rollback in tasks.md."""
     # Concrete contractwaarden: exact één budgetpaar (500ms/1000ms) en één rollback-volgorde
     # waarin `down -v` altijd vóór restore staat.
-    tasks_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/tasks.md")
+    tasks_path = CHANGE / "tasks.md"
     if tasks_path.exists():
         content = tasks_path.read_text()
 
@@ -743,7 +751,7 @@ def test_10_6_4_verify_all_tasks_are_actionable_and_testable() -> None:
     # Testable: elke taak noemt een concrete referentie (waarde, pad, code,
     # contract, systeemelement of opgeleverd artefact) — geen vage opdrachten
     # zonder inspectiepunt.
-    tasks_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/tasks.md")
+    tasks_path = CHANGE / "tasks.md"
     if tasks_path.exists():
         content = tasks_path.read_text()
         ids = _task_ids(content)
@@ -784,7 +792,7 @@ def test_10_6_5_verify_no_verouderde_docker_compose_v1_commando_s() -> None:
     """10.6.5 Verifieer geen verouderde `docker-compose` (v1) commando's of obsolete taken meer voorkomen in tasks.md."""
     # Concrete invariant: nergens een v1-aanroep of v1-bestandsnaam; elke vermelding van
     # `docker-compose` staat in een negatieve context en alle opdrachten zijn v2.
-    tasks_path = Path("/home/peter/git/de-nieuws-piet/openspec/changes/bootstrap-local-news-dashboard/tasks.md")
+    tasks_path = CHANGE / "tasks.md"
     if tasks_path.exists():
         content = tasks_path.read_text()
 

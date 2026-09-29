@@ -37,6 +37,25 @@ FRONTEND_DIR = ROOT / "frontend"
 COMPOSE_FILE = ROOT / "compose.yaml"
 READINESS_LOOP = ROOT / "scripts" / "readiness-loop.sh"
 
+# Na afronding is de bootstrap-change gearchiveerd (de map verhuisde naar
+# `openspec/changes/archive/<datum>-<naam>`). De statische verificaties in
+# `test_exact_verification.py` en `test_discrete_verified_tasks.py` lezen die
+# artefacten en moeten zowel de actieve als de gearchiveerde ligging vinden.
+BOOTSTRAP_CHANGE_NAME = "bootstrap-local-news-dashboard"
+
+
+def bootstrap_change_dir() -> Path:
+    """Map van de bootstrap-change: actief pad eerst, anders de archiefkopie."""
+    changes = ROOT / "openspec" / "changes"
+    archive = changes / "archive"
+    kandidaten = [changes / BOOTSTRAP_CHANGE_NAME]
+    if archive.is_dir():
+        kandidaten.extend(sorted(archive.glob(f"*{BOOTSTRAP_CHANGE_NAME}")))
+    for pad in kandidaten:
+        if pad.is_dir():
+            return pad
+    return kandidaten[0]
+
 MAIN_PROJECT = "de-nieuws-piet"
 REAL_VOLUME = "nieuws_piet_sqlite_data"
 
