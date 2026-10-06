@@ -9,10 +9,15 @@ Onderwerpen
 3. Linux en open source
 4. T Cloud Public en Open Telekom Cloud
 5. Digitale soevereiniteit en Europese cloud
-6. Oekraïne
-7. Iran en Midden-Oosten
-8. Geopolitiek
-9. Crypto, met extra prioriteit voor Ethereum
+6. Belangrijkste nieuws uit Nederland
+7. Belangrijkste nieuws uit Europa
+8. Nederlandse politiek
+9. Oekraïne
+10. Iran en Midden-Oosten
+11. Geopolitiek
+12. Crypto in brede zin, met extra prioriteit voor Ethereum
+13. CNCF-projecten, cloud-native-ecosysteem en communitynieuws
+14. Agentic AI Foundation (AAIF), aangesloten projecten en ecosysteemnieuws
 
 Productprincipes
 - Lokaal-first: standaard alleen bereikbaar op LAN; optioneel veilig via Tailscale.
@@ -108,6 +113,14 @@ Aanpassing aan classificatie en ranking
 - Gebruik onderscheid tussen productreleases, technische referentiearchitectuur, security/compliance, prijs/contractnieuws en marketing. Marketing krijgt standaard een lagere score.
 - Voeg per bron een veld toe voor cloud: azure, aws, t-cloud, otc, multi-cloud of sovereign-cloud.
 
+Nederland, Europa, politiek en ecosystemen
+- Voeg dagelijkse rubrieken toe voor het belangrijkste algemene nieuws uit Nederland en Europa. Selecteer op maatschappelijke impact en relevantie; vermijd een brede stroom van klein of sensationeel nieuws.
+- Behandel Nederlandse politiek als zelfstandig onderwerp, met nadruk op kabinet, parlement, verkiezingen, beleid, uitvoering en gevolgen voor burgers en bedrijfsleven.
+- Verbreed crypto van een Ethereum-rubriek naar algemeen cryptonieuws, terwijl Ethereum een expliciet hogere prioriteit en een eigen kruislabel behoudt.
+- Volg CNCF-nieuws over projecten, releases, governance, security, end-userontwikkelingen en het cloud-native-ecosysteem.
+- Volg AAIF-nieuws over aangesloten agentprojecten, standaarden, governance, interoperabiliteit en concrete technische releases; algemene AI-marketing krijgt een lagere score.
+- Label nieuws dat tegelijk Nederland, Europa, digitale soevereiniteit, cloud, AI of geopolitiek raakt met alle relevante kruislabels.
+
 OpenSpec-indeling
-De bronvelden en startbronnen vallen onder add-source-catalog. De onderwerpen, kruislabels en marketingweging vallen onder add-explainable-topic-ranking; hiervoor komt geen brede catch-all change.
+De bronvelden en startbronnen vallen onder add-source-catalog. De onderwerpen, kruislabels en marketingweging vallen onder add-explainable-topic-ranking; dit omvat ook Nederland, Europa, Nederlandse politiek, brede crypto met Ethereum-prioriteit, CNCF en AAIF. Hiervoor komt geen brede catch-all change.
 
